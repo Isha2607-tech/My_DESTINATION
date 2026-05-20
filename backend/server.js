@@ -70,7 +70,9 @@ const io = new Server(server, {
       'http://127.0.0.1:5175',
       'https://rukkoo.in',
       'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app'
+      'https://rukkoo-project.vercel.app',
+      'https://my-destination-nu.vercel.app'
+
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
