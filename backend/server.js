@@ -1,117 +1,18 @@
+import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
-import 'dotenv/config';
 import cors from 'cors';
-import { initializeFirebase } from './config/firebase.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import morgan from 'morgan';
 
-// Initialize Firebase
-initializeFirebase();
+// Firebase
+import { initializeFirebase } from './config/firebase.js';
 
-// Initialize Cron Jobs
+// Cron Services
 import './services/cronService.js';
 
-
-
-const app = express();
-const server = createServer(app); // Create HTTP server
-const PORT = process.env.PORT || 5000;
-
-// Initialize Socket.io
-const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:5174',
-      'http://localhost:5175',
-      'http://127.0.0.1:5175',
-      'https://rukkoo.in',
-      'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app'
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-  }
-});
-
-// Socket.io Logic
-io.on('connection', (socket) => {
-  console.log('🔌 New Client Connected:', socket.id);
-
-  // User joins a tracking room (e.g., their booking ID or just a hotel room)
-  socket.on('join_tracking', (room) => {
-    socket.join(room);
-    console.log(`User ${socket.id} joined room: ${room}`);
-  });
-
-  // User emits location updates
-  socket.on('update_location', (data) => {
-    const { room, location } = data;
-    // Broadcast to others in the room (e.g., Hotel Dashboard)
-    socket.to(room).emit('live_location_update', location);
-    // console.log(`Location update from ${socket.id} in ${room}:`, location);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
-
-configureTaxiSocketServer(server);
-
-// Middleware
-app.use(morgan('dev'));
-// Middleware to log request start
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Incoming Request: ${req.method} ${req.url}`);
-  next();
-});
-
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Dynamic CORS to allow local network IPs (192.168.x.x) and localhost
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    // Check if origin is localhost or local network IP
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:5174',
-      'http://localhost:5175',
-      'http://127.0.0.1:5175',
-      'https://rukkoo.in',
-      'https://www.rukkoo.in',
-      'https://rukkoo-project.vercel.app',
-      'https://rukooin-ijcelh2vj-appzetos-projects-73814664.vercel.app'
-    ];
-    // Add 172.16-31 range (often used by hotspots) and 10.x
-    const isLocalNetwork =
-      origin.startsWith('http://192.168.') ||
-      origin.startsWith('http://10.') ||
-      origin.startsWith('http://172.');
-
-    if (allowedOrigins.indexOf(origin) !== -1 || isLocalNetwork) {
-      callback(null, true);
-    } else {
-      console.log('Blocked by CORS:', origin); // Log blocked origin for debugging
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added OPTIONS
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}));
-
-// Routes
+// Route Imports
 import authRoutes from './modules/auth/routes/authRoutes.js';
 import userRoutes from './modules/user/routes/userRoutes.js';
 import adminRoutes from './modules/admin/routes/adminRoutes.js';
@@ -135,6 +36,134 @@ import { restoreScheduledDispatches } from './modules/taxi/services/dispatchServ
 import weddingRoutes from './modules/wedding/routes/weddingRoutes.js';
 import notificationRoutes from './modules/notification/routes/notificationRoutes.js';
 
+// Global Process Handlers
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+});
+
+// Express Init
+const app = express();
+const server = createServer(app);
+const PORT = process.env.PORT || 5000;
+
+// Initialize Firebase with try/catch
+try {
+  initializeFirebase();
+  console.log('✅ Firebase initialized');
+} catch (error) {
+  console.error('❌ Firebase init failed:', error.message);
+}
+
+// Socket.io Initialization (Hotel tracking)
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+      'http://localhost:5175',
+      'http://127.0.0.1:5175',
+      'https://rukkoo.in',
+      'https://www.rukkoo.in',
+      'https://rukkoo-project.vercel.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('🔌 New Client Connected:', socket.id);
+
+  socket.on('join_tracking', (room) => {
+    socket.join(room);
+    console.log(`User ${socket.id} joined room: ${room}`);
+  });
+
+  socket.on('update_location', (data) => {
+    const { room, location } = data;
+    socket.to(room).emit('live_location_update', location);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+// Taxi Socket Server Configuration
+configureTaxiSocketServer(server);
+
+// Middleware
+app.use(morgan('dev'));
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Incoming Request: ${req.method} ${req.url}`);
+  next();
+});
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Robust CORS Middleware
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+      'http://localhost:5175',
+      'http://127.0.0.1:5175',
+      'https://rukkoo.in',
+      'https://www.rukkoo.in',
+      'https://rukkoo-project.vercel.app',
+      'https://rukooin-ijcelh2vj-appzetos-projects-73814664.vercel.app'
+    ];
+
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com') ||
+      origin.startsWith('http://192.168.') ||
+      origin.startsWith('http://10.') ||
+      origin.startsWith('http://172.') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1');
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
+
+// Routes
+app.get('/', (req, res) => {
+  res.send({ message: 'Rukkoin API is running successfully' });
+});
+
+// Direct Health Check (Must be before infoRoutes)
+app.get('/api/info/platform/status', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Server running successfully',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || 'development'
+  });
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -158,10 +187,23 @@ app.use('/api/v1', taxiRouter);
 app.use('/api/wedding', weddingRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// 404 Handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('❌ Global Error Handler:', err);
+  console.error('❌ Global Error Handler Catch-All:');
+  console.error(`Error Message: ${err.message}`);
+  console.error(`Stack Trace:\n${err.stack || 'No stack trace available'}`);
+  if (err.details) {
+    console.error('Details:', JSON.stringify(err.details, null, 2));
+  }
+
   const statusCode = Number(err?.statusCode || err?.status || 500);
   res.status(statusCode).json({
     success: false,
@@ -171,24 +213,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-// Basic Route
-app.get('/', (req, res) => {
-  res.send({ message: 'Rukkoin API is running successfully' });
-});
-
-// MongoDB Connection Options with retry logic
+// MongoDB Connection Options
 const mongoOptions = {
-  serverSelectionTimeoutMS: 10000, // Timeout after 10s instead of 30s
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
-  family: 4, // Use IPv4, skip trying IPv6
+  family: 4,
   maxPoolSize: 10,
   minPoolSize: 2,
   retryWrites: true,
   retryReads: true,
 };
 
-// Database Connection with Retry Logic
+// Database Connection and Server Listen
 const connectWithRetry = async (retries = 5, delay = 5000) => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -196,17 +232,8 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
       console.log(`🔄 Attempting MongoDB connection... (Attempt ${i + 1}/${retries})`);
       console.log(`📍 Connecting to: ${maskedUri}`);
 
-      await mongoose.connect(
-        process.env.MONGODB_URL,
-        mongoOptions
-      );
-
+      await mongoose.connect(process.env.MONGODB_URL, mongoOptions);
       console.log('✅ MongoDB connected successfully');
-
-      // Debug: Check Admin counts
-      const adminCount = await mongoose.connection.db.collection('admins').countDocuments();
-      const userCount = await mongoose.connection.db.collection('users').countDocuments();
-      console.log(`📊 DB Status - Admins: ${adminCount}, Users: ${userCount}`);
 
       // Start server only after successful DB connection
       server.listen(PORT, () => {
@@ -214,7 +241,7 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
       });
 
       await restoreScheduledDispatches();
-      return; // Exit function on success
+      return;
     } catch (err) {
       console.error(`❌ MongoDB connection attempt ${i + 1} failed:`, err.message);
 
@@ -222,18 +249,13 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
         console.log(`⏳ Retrying in ${delay / 1000} seconds...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
-        console.error('❌ All MongoDB connection attempts failed. Please check:');
-        console.error('   1. Your internet connection');
-        console.error('   2. MongoDB Atlas IP whitelist (add 0.0.0.0/0 for testing)');
-        console.error('   3. Your firewall/antivirus settings');
-        console.error('   4. DNS settings (try flushing DNS: ipconfig /flushdns)');
+        console.error('❌ All MongoDB connection attempts failed. Please check your setup.');
         process.exit(1);
       }
     }
   }
 };
 
-// Handle MongoDB connection events
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
 });
@@ -246,5 +268,5 @@ mongoose.connection.on('reconnected', () => {
   console.log('✅ MongoDB reconnected successfully');
 });
 
-// Start connection
+// Execute Connection
 connectWithRetry();
