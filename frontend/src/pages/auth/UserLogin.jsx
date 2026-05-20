@@ -47,14 +47,6 @@ const UserLogin = () => {
 
         try {
             setLoading(true);
-            // Bypass for special number
-            if (phone === '8817921168' || phone === '6268455485') {
-                setResendTimer(120);
-                setCanResend(false);
-                setStep(2);
-                toast.success('OTP sent to your number!');
-                return;
-            }
             await authService.sendOtp(phone, 'login');
             setResendTimer(120);
             setCanResend(false);
