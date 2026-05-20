@@ -190,7 +190,7 @@ app.use('/api/wedding', weddingRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // 404 Handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found'
