@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const HotelLoginPage = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    const [phone, setPhone] = useState('8817921168');
+    const [phone, setPhone] = useState('6268455485');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -34,7 +34,7 @@ const HotelLoginPage = () => {
         try {
             setLoading(true);
             // Master Number Bypass
-            if (phone === '8817921168') {
+            if (phone === '8817921168' || phone === '6268455485') {
                 setResendTimer(120);
                 setCanResend(false);
                 setStep(2);
@@ -74,24 +74,8 @@ const HotelLoginPage = () => {
         try {
             setLoading(true);
 
-            // Master Credentials Bypass
-            if (phone === '8817921168' && otpString === '123456') {
-                try {
-                    await authService.verifyOtp({ phone, otp: otpString, role: 'partner' });
-                } catch (e) {
-                    console.log("[AUTH] Bypassing actual API for partner master credentials");
-                    localStorage.setItem('token', 'bypass-token-partner-8817921168');
-                    localStorage.setItem('user', JSON.stringify({
-                        _id: 'partner-bypass-id',
-                        name: 'Master Partner',
-                        phone: '8817921168',
-                        role: 'partner',
-                        partnerApprovalStatus: 'approved'
-                    }));
-                }
-            } else {
-                await authService.verifyOtp({ phone, otp: otpString, role: 'partner' });
-            }
+            // Directly call API to get and store a real JWT token
+            await authService.verifyOtp({ phone, otp: otpString, role: 'partner' });
 
             try {
                 window.dispatchEvent(new CustomEvent('fcm:register'));

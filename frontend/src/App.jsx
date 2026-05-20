@@ -444,11 +444,19 @@ const WeddingVendorProtectedRoute = ({ children }) => {
   return children ? children : <Outlet />;
 };
 
-// Public Route (redirects to home if already logged in)
+// Public Route (redirects to home/dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token');
+  const userRaw = localStorage.getItem('user');
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  
   if (token) {
-    return <Navigate to="/welcome" replace />;
+    if (user?.role === 'partner') {
+      return <Navigate to="/hotel/dashboard" replace />;
+    } else if (user?.role === 'vendor') {
+      return <Navigate to="/wedding/vendor/dashboard" replace />;
+    }
+    return <Navigate to="/home" replace />;
   }
   return children;
 };

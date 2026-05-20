@@ -243,7 +243,9 @@ const VendorDetailPage = () => {
             <div className="mb-6">
               <span className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Starting Price</span>
               <div className="text-3xl font-black text-primary">
-                {vendor.price || (vendor.startingPrice ? `₹${(vendor.startingPrice / 100000).toFixed(1)}L` : 'Contact')}
+                {typeof vendor.price === 'object' 
+                  ? (vendor.price.base ? `₹${vendor.price.base.toLocaleString()}` : 'Contact')
+                  : (vendor.price || (vendor.startingPrice ? `₹${(vendor.startingPrice / 100000).toFixed(1)}L` : 'Contact'))}
               </div>
             </div>
             <form onSubmit={handleEnquirySubmit} className="space-y-4">

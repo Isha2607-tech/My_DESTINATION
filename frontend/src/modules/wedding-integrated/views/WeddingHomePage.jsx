@@ -283,7 +283,13 @@ const WeddingHomePage = () => {
                   className="group relative block aspect-[3/2] rounded-[1.25rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
                 >
                   <img
-                    src={dest.image}
+                    src={dest.image || {
+                      Udaipur: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=600&auto=format&fit=crop",
+                      Goa: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                      Jaipur: "https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=600&auto=format&fit=crop",
+                      Shimla: "https://images.unsplash.com/photo-1597075687490-8f673c6c17f6?q=80&w=600&auto=format&fit=crop",
+                      Kerala: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?q=80&w=600&auto=format&fit=crop"
+                    }[dest.name.trim()] || "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop"}
                     alt={`${dest.name} Weddings`}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />

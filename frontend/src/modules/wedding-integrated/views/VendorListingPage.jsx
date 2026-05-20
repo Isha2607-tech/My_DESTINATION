@@ -84,11 +84,23 @@ const ListingView = ({ category: categoryFromProps, cityFromUrl }) => {
   };
 
   const displayCities = useMemo(() => {
+    const defaultCityImages = {
+      Udaipur: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=200&auto=format&fit=crop",
+      Goa: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=200&auto=format&fit=crop",
+      Jaipur: "https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=200&auto=format&fit=crop",
+      Shimla: "https://images.unsplash.com/photo-1597075687490-8f673c6c17f6?q=80&w=200&auto=format&fit=crop",
+      Kerala: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?q=80&w=200&auto=format&fit=crop"
+    };
+
     if (destinations.length > 0) {
-      return destinations.map(d => ({
-        name: d.name,
-        image: d.image
-      }));
+      return destinations.map(d => {
+        const cityName = d.name.trim();
+        const fallback = defaultCityImages[cityName] || "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=200&auto=format&fit=crop";
+        return {
+          name: d.name,
+          image: d.image || fallback
+        };
+      });
     }
     return citiesData;
   }, [destinations]);

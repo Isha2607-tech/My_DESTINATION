@@ -120,9 +120,18 @@ const UserSignup = () => {
             try {
                 window.dispatchEvent(new CustomEvent('fcm:register'));
             } catch (fcmErr) { }
-            localStorage.removeItem('referralCode');
-            // Direct redirect to welcome page
-            navigate('/welcome', { replace: true });
+            // Direct redirect to respective panel
+            const userRaw = localStorage.getItem('user');
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            
+            let defaultRedirect = '/home';
+            if (user?.role === 'partner') {
+                defaultRedirect = '/hotel/dashboard';
+            } else if (user?.role === 'vendor') {
+                defaultRedirect = '/wedding/vendor/dashboard';
+            }
+            
+            navigate(defaultRedirect, { replace: true });
         } catch (err) {
             setError(err.message || 'Verification failed');
         } finally {

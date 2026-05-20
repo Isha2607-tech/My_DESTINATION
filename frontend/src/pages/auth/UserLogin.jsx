@@ -11,7 +11,7 @@ const UserLogin = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [step, setStep] = useState(1);
-    const [phone, setPhone] = useState('8817921168');
+    const [phone, setPhone] = useState('6268455485');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -48,7 +48,7 @@ const UserLogin = () => {
         try {
             setLoading(true);
             // Bypass for special number
-            if (phone === '8817921168') {
+            if (phone === '8817921168' || phone === '6268455485') {
                 setResendTimer(120);
                 setCanResend(false);
                 setStep(2);
@@ -125,25 +125,8 @@ const UserLogin = () => {
 
         try {
             setLoading(true);
-            // Default check/bypass for master OTP
-            if (phone === '8817921168' && otpString === '123456') {
-                // Try to hit API but ignore failure if it's the bypass
-                try {
-                    await authService.verifyOtp({ phone, otp: otpString });
-                } catch (e) {
-                    console.log("Bypassing actual API verification for master credentials");
-                    // Important: Set mock session info so UserProtectedRoute allows access
-                    localStorage.setItem('token', 'bypass-token-8817921168');
-                    localStorage.setItem('user', JSON.stringify({
-                        _id: 'bypass-user-id',
-                        name: 'Master User',
-                        phone: '8817921168',
-                        role: 'user'
-                    }));
-                }
-            } else {
-                await authService.verifyOtp({ phone, otp: otpString });
-            }
+            // Directly call API to get and store a real JWT token
+            await authService.verifyOtp({ phone, otp: otpString });
 
             try {
                 window.dispatchEvent(new CustomEvent('fcm:register'));
@@ -151,7 +134,17 @@ const UserLogin = () => {
                 console.warn('[FCM] Could not dispatch register event', fcmError);
             }
             // Dynamic redirect based on where they came from
-            const redirectTo = location.state?.from?.pathname || '/welcome';
+            const userRaw = localStorage.getItem('user');
+            const user = userRaw ? JSON.parse(userRaw) : null;
+            
+            let defaultRedirect = '/home';
+            if (user?.role === 'partner') {
+                defaultRedirect = '/hotel/dashboard';
+            } else if (user?.role === 'vendor') {
+                defaultRedirect = '/wedding/vendor/dashboard';
+            }
+            
+            const redirectTo = location.state?.from?.pathname || defaultRedirect;
             const search = location.state?.from?.search || '';
             navigate(redirectTo + search, { replace: true });
         } catch (err) {
