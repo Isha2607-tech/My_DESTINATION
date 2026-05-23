@@ -72,7 +72,7 @@ const TestimonialForm = ({ isOpen, onClose }) => {
                     required
                     placeholder="e.g. Tara & Jay"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    onChange={e => setFormData({...formData, name: e.target.value.replace(/[^a-zA-Z\s&'-]/g, '')})}
                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                </div>
@@ -82,7 +82,7 @@ const TestimonialForm = ({ isOpen, onClose }) => {
                     required
                     placeholder="e.g. Goa Beach Wedding"
                     value={formData.location}
-                    onChange={e => setFormData({...formData, location: e.target.value})}
+                    onChange={e => setFormData({...formData, location: e.target.value.replace(/[^a-zA-Z\s,.-]/g, '')})}
                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                </div>

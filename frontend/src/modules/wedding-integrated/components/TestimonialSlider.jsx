@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
-import { testimonials as staticTestimonials } from "../data/weddingData";
 import { weddingService } from "../../../services/weddingService";
 
 const TestimonialSlider = () => {
@@ -12,14 +11,10 @@ const TestimonialSlider = () => {
     const fetchTestimonials = async () => {
       try {
         const data = await weddingService.getTestimonials();
-        if (data && data.length > 0) {
-          setTestimonials(data);
-        } else {
-          setTestimonials(staticTestimonials);
-        }
+        setTestimonials(data || []);
       } catch (error) {
         console.error("Failed to fetch testimonials:", error);
-        setTestimonials(staticTestimonials);
+        setTestimonials([]);
       } finally {
         setLoading(false);
       }
@@ -35,10 +30,18 @@ const TestimonialSlider = () => {
     return () => clearInterval(interval);
   }, [testimonials]);
 
-  if (loading && testimonials.length === 0) {
+  if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!loading && testimonials.length === 0) {
+    return (
+      <div className="py-12 text-center bg-white/60 backdrop-blur-md rounded-[2.5rem] border border-pink-100/50">
+        <p className="text-slate-500 italic font-medium">No testimonials yet. Be the first to share your story!</p>
       </div>
     );
   }

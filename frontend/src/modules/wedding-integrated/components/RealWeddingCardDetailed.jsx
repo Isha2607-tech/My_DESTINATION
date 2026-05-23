@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlanWeddingModal from "./PlanWeddingModal";
 
@@ -38,7 +38,7 @@ const RealWeddingCardDetailed = ({ wedding }) => {
               Budget bracket
             </p>
             <p className="text-xs font-extrabold text-[#111827]">
-              {wedding.budgetMin} â€” {wedding.budgetMax}
+              {wedding.budgetMin} - {wedding.budgetMax}
             </p>
           </div>
 

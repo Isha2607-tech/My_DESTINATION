@@ -22,6 +22,7 @@ import {
   ExternalLink,
   PlusCircle,
   Video,
+  ChevronLeft,
   ChevronRight,
   TrendingUp,
   Sparkles,
@@ -105,6 +106,11 @@ const ProfileEditor = () => {
              basePackage: {
                ...defaultData.basePackage,
                price: oData.pricing?.basePrice ? `₹${oData.pricing.basePrice}` : defaultData.basePackage.price
+             },
+             premiumPackage: {
+               ...defaultData.premiumPackage,
+               price: oData.pricing?.premiumPrice ? `₹${oData.pricing.premiumPrice}` : defaultData.premiumPackage.price,
+               features: oData.pricing?.description || defaultData.premiumPackage.features
              }
            };
          }
@@ -139,8 +145,16 @@ const ProfileEditor = () => {
             portfolio: v.portfolio || prev.portfolio,
             basePackage: {
               ...prev.basePackage,
-              price: v.price?.base ? `₹${v.price.base}` : prev.basePackage.price
-            }
+              price: v.price?.base ? `₹${v.price.base}` : prev.basePackage.price,
+              features: v.price?.baseFeatures || prev.basePackage.features
+            },
+            premiumPackage: {
+              ...prev.premiumPackage,
+              price: v.price?.premium ? `₹${v.price.premium}` : prev.premiumPackage.price,
+              features: v.price?.premiumFeatures || prev.premiumPackage.features
+            },
+            albums: v.albums || prev.albums,
+            videos: v.videos || prev.videos
           }));
         }
       } catch (error) {
@@ -177,38 +191,57 @@ const ProfileEditor = () => {
   };
 
   const handleFileUpload = (e, target) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    if (target === 'portfolio') {
+      const loaders = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(loaders).then(newImages => {
+        setVendorData(prev => ({ 
+          ...prev, 
+          portfolio: [...newImages, ...prev.portfolio].slice(0, 20) 
+        }));
+      });
+    } else {
+      const file = files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
         if (target === 'banner') {
           setVendorData(prev => ({ ...prev, banner: reader.result }));
-        } else if (target === 'portfolio') {
-          setVendorData(prev => ({ 
-            ...prev, 
-            portfolio: [reader.result, ...prev.portfolio].slice(0, 20) 
-          }));
         }
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = ""; // Reset input so same files can be selected again
   };
 
   const handleSave = async () => {
     try {
       const dataToSave = { ...vendorData, ownerId: user?.id };
       
-      // Update local storage
-      const allProjects = JSON.parse(localStorage.getItem('vendorProjects') || '[]');
-      const projectIndex = allProjects.findIndex(p => p.id === vendorData.id);
-      
-      let updatedProjects;
-      if (projectIndex > -1) {
-        updatedProjects = allProjects.map(p => p.id === vendorData.id ? dataToSave : p);
-      } else {
-        updatedProjects = [...allProjects, dataToSave];
+      // Update local storage (wrap in try-catch to prevent quota limit from blocking the server save)
+      try {
+        const allProjects = JSON.parse(localStorage.getItem('vendorProjects') || '[]');
+        const projectIndex = allProjects.findIndex(p => p.id === vendorData.id);
+        
+        let updatedProjects;
+        if (projectIndex > -1) {
+          updatedProjects = allProjects.map(p => p.id === vendorData.id ? dataToSave : p);
+        } else {
+          updatedProjects = [...allProjects, dataToSave];
+        }
+        localStorage.setItem('vendorProjects', JSON.stringify(updatedProjects));
+      } catch (storageError) {
+        console.warn("Could not save to local storage (likely quota exceeded). Continuing to server save...", storageError);
       }
-      localStorage.setItem('vendorProjects', JSON.stringify(updatedProjects));
+      
       window.dispatchEvent(new CustomEvent('vendorProfileUpdate', { detail: dataToSave }));
       
       // Save to backend API
@@ -221,11 +254,16 @@ const ProfileEditor = () => {
         contactPhone: vendorData.phone,
         contactEmail: vendorData.email,
         price: {
-            base: parseInt((vendorData.basePackage?.price || '0').replace(/\D/g, '')),
+            base: parseInt((vendorData.basePackage?.price || '0').toString().replace(/\D/g, '')) || 0,
+            baseFeatures: vendorData.basePackage?.features || '',
+            premium: parseInt((vendorData.premiumPackage?.price || '0').toString().replace(/\D/g, '')) || 0,
+            premiumFeatures: vendorData.premiumPackage?.features || '',
             type: 'total'
         },
         services: vendorData.services,
-        portfolio: vendorData.portfolio
+        portfolio: vendorData.portfolio,
+        albums: vendorData.albums,
+        videos: vendorData.videos
       };
       
       await createVendor(apiPayload);
@@ -340,7 +378,7 @@ const ProfileEditor = () => {
     <VendorLayout title="Vendor Profile">
       <input type="file" ref={albumInputRef} id="album-input" onChange={handleAlbumUpload} className="hidden" accept="image/*" multiple />
       <input type="file" ref={bannerInputRef} onChange={(e) => handleFileUpload(e, 'banner')} className="hidden" accept="image/*" />
-      <input type="file" ref={portfolioInputRef} onChange={(e) => handleFileUpload(e, 'portfolio')} className="hidden" accept="image/*" />
+      <input type="file" ref={portfolioInputRef} onChange={(e) => handleFileUpload(e, 'portfolio')} className="hidden" accept="image/*" multiple />
 
       {/* Root Wrapper to separate animated content from fixed overlays */}
       <div className="relative min-h-full">
@@ -538,11 +576,34 @@ const ProfileEditor = () => {
                                   <span className="text-[9px] font-black uppercase text-[#8E7E77]">New Album</span>
                                </button>
                                {vendorData.albums.map((album, idx) => (
-                                 <div key={idx} onClick={() => setViewingGallery(idx)} className="aspect-video rounded-2xl overflow-hidden border border-[#F3E9E2] relative group cursor-pointer">
-                                    <img src={album.cover} alt="" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-3">
-                                       <h4 className="text-white text-[10px] font-black leading-tight truncate">{album.name}</h4>
-                                    </div>
+                                 <div key={idx} onClick={() => setViewingGallery(idx)} className="flex flex-col gap-1.5 cursor-pointer group">
+                                   <div className="aspect-video rounded-2xl overflow-hidden border border-[#F3E9E2] relative">
+                                      <img src={album.cover} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3">
+                                         <h4 className="text-white text-xs font-black leading-tight truncate">{album.name}</h4>
+                                         <span className="text-white/80 text-[9px] font-bold mt-0.5">{album.images.length} Photos</span>
+                                      </div>
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveAlbum(idx); }} 
+                                        className="absolute top-2 right-2 w-7 h-7 rounded-xl bg-black/50 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 z-10"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                   </div>
+                                   {album.images.length > 1 && (
+                                     <div className="flex gap-1.5 w-full">
+                                       {album.images.slice(1, 5).map((img, i) => (
+                                         <div key={i} className="flex-1 aspect-[4/3] rounded-lg overflow-hidden border border-[#F3E9E2] bg-[#F3E9E2]/10">
+                                           <img src={img} alt="" className="w-full h-full object-cover" />
+                                         </div>
+                                       ))}
+                                       {album.images.length > 5 && (
+                                         <div className="flex-1 aspect-[4/3] rounded-lg bg-[#F3E9E2]/30 border border-[#F3E9E2] flex items-center justify-center text-[#4A3730] text-[10px] font-black shadow-inner">
+                                           +{album.images.length - 5}
+                                         </div>
+                                       )}
+                                     </div>
+                                   )}
                                  </div>
                                ))}
                             </div>
@@ -606,6 +667,48 @@ const ProfileEditor = () => {
                      </div>
                      <button onClick={triggerAlbumUpload} className="w-full py-3.5 rounded-xl bg-primary text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all">Select Photos</button>
                      <button onClick={() => setShowAlbumForm(false)} className="w-full py-3.5 text-[#8E7E77] font-black uppercase text-[10px] hover:text-primary transition-colors">Cancel</button>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {/* Gallery Viewer Overlay */}
+          {viewingGallery !== false && vendorData.albums[viewingGallery] && (
+            <div className="fixed inset-0 z-[600] bg-white/90 backdrop-blur-xl p-4 md:p-8 flex flex-col animate-wedding-fade-in overflow-y-auto">
+               <div className="max-w-5xl mx-auto w-full space-y-6">
+                  <div className="flex items-center justify-between">
+                     <div>
+                        <h2 className="text-xl md:text-2xl font-black text-[#4A3730] uppercase tracking-wider">{vendorData.albums[viewingGallery].name}</h2>
+                        <p className="text-xs font-bold text-[#8E7E77] uppercase tracking-widest">{vendorData.albums[viewingGallery].images.length} Photos • {vendorData.albums[viewingGallery].location}</p>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <button onClick={() => albumInputRef.current?.click()} className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 hover:scale-105 transition-all">
+                           <Plus className="w-4 h-4" /> Add Photos
+                        </button>
+                        <button onClick={() => setViewingGallery(false)} className="px-5 py-2.5 bg-white border border-[#F3E9E2] rounded-xl flex items-center justify-center gap-2 text-[#4A3730] font-black uppercase text-[10px] tracking-widest hover:bg-[#F3E9E2]/30 transition-colors shadow-sm">
+                           <ChevronLeft className="w-4 h-4" /> Back
+                        </button>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                     {vendorData.albums[viewingGallery].images.map((img, idx) => (
+                       <div key={idx} className="aspect-square rounded-2xl overflow-hidden border border-[#F3E9E2] relative group">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleRemoveGalleryImage(viewingGallery, idx); }} 
+                            className="absolute top-2 right-2 w-7 h-7 rounded-xl bg-black/50 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500"
+                          >
+                             <Trash2 className="w-4 h-4" />
+                          </button>
+                       </div>
+                     ))}
+                     {vendorData.albums[viewingGallery].images.length === 0 && (
+                       <div className="col-span-full py-20 flex flex-col items-center justify-center text-[#8E7E77] border-2 border-dashed border-[#F3E9E2] rounded-3xl">
+                          <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
+                          <p className="text-xs font-black uppercase tracking-widest">No Photos Yet</p>
+                       </div>
+                     )}
                   </div>
                </div>
             </div>

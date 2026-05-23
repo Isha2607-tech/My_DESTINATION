@@ -869,9 +869,9 @@ export const weddingVendorService = {
       throw error.response?.data || error.message;
     }
   },
-  updatePassword: async (newPassword) => {
+  updatePassword: async (currentPassword, newPassword) => {
     try {
-      const response = await api.patch('/wedding/vendor/password', { newPassword });
+      const response = await api.patch('/wedding/vendor/password', { currentPassword, newPassword });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

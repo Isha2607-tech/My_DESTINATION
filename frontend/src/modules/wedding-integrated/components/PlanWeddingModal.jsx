@@ -95,7 +95,12 @@ const PlanWeddingModal = ({ isOpen, onClose, initialLocation = "", targetId, tar
                   placeholder="Enter Name"
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-100 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-[#ff7676]/20 focus:border-[#ff7676] transition-all text-sm placeholder:text-slate-400"
                   value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[a-zA-Z\s]*$/.test(val)) {
+                      setFormData({...formData, fullName: val});
+                    }
+                  }}
                 />
               </div>
 

@@ -96,7 +96,7 @@ const RealWeddingGalleryPage = () => {
               {wedding.coupleName}
             </h1>
             <p className="text-[10px] md:text-xs text-primary uppercase tracking-[0.2em] font-black">
-              {wedding.location} Wedding
+              {wedding.locationName || wedding.location || wedding.destination?.name || "Destination"} Wedding
             </p>
           </div>
 
@@ -125,7 +125,7 @@ const RealWeddingGalleryPage = () => {
               A Love Story Captured
             </div>
             <h2 className="text-2xl md:text-5xl font-bold leading-tight mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Memories from the <br className="hidden sm:block" /> {wedding.location} Celebration
+              Memories from the <br className="hidden sm:block" /> {wedding.locationName || wedding.location || wedding.destination?.name || "Destination"} Celebration
             </h2>
             <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] md:text-sm text-slate-500 font-medium italic">
               <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ const RealWeddingGalleryPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                <span>{wedding.budgetMin} â€” {wedding.budgetMax} Budget</span>
+                <span>{wedding.budgetMin} - {wedding.budgetMax} Budget</span>
               </div>
             </div>
           </div>

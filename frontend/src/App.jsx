@@ -140,6 +140,8 @@ const WeddingSavedDestinationsPage = React.lazy(() => import('./modules/wedding-
 const WeddingMyEnquiriesPage = React.lazy(() => import('./modules/wedding-integrated/views/MyEnquiriesPage'));
 const WeddingAccountSettingsPage = React.lazy(() => import('./modules/wedding-integrated/views/AccountSettingsPage'));
 const WeddingEnquiryPage = React.lazy(() => import('./modules/wedding-integrated/views/WeddingEnquiryPage'));
+const WeddingHelpSupportPage = React.lazy(() => import('./modules/wedding-integrated/views/HelpSupportPage'));
+const WeddingMySupportTicketsPage = React.lazy(() => import('./modules/wedding-integrated/views/MySupportTicketsPage'));
 
 // Lazy Imports - Wedding Admin Module
 const WeddingAdminLayout = React.lazy(() => import('./modules/wedding-integrated/admin/components/AdminLayout'));
@@ -368,7 +370,10 @@ const UserPrivateRoute = ({ children }) => {
   const location = useLocation();
 
   if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Send wedding module users to wedding login, others to generic login
+    const isWeddingRoute = location.pathname.startsWith('/wedding');
+    const loginPath = isWeddingRoute ? '/wedding/login' : '/login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   if (user?.role === 'partner') {
@@ -602,6 +607,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/taxi/*" element={<TaxiApp />} />
             <Route path="/login" element={<PublicRoute><UserLogin /></PublicRoute>} />
+            <Route path="/wedding/login" element={<PublicRoute><UserLogin theme="wedding" /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><UserSignup /></PublicRoute>} />
             <Route path="/r/:referralCode" element={<ReferralHandler />} />
             <Route path="/legal" element={<LegalPage />} />
@@ -725,6 +731,8 @@ function App() {
               <Route path="vendors" element={<WeddingVendorListingPage />} />
               <Route path="vendors/:vendorId" element={<WeddingVendorDetailPage />} />
               <Route path="enquiry" element={<WeddingEnquiryPage />} />
+              <Route path="support" element={<WeddingHelpSupportPage />} />
+              <Route path="my-tickets" element={<WeddingMySupportTicketsPage />} />
               {/* Private Wedding User Routes */}
               <Route element={<UserPrivateRoute />}>
                 <Route path="bookings" element={<WeddingMyBookingsPage />} />
@@ -768,11 +776,10 @@ function App() {
               <Route path="/wedding/vendor/onboarding" element={<WeddingVendorOnboardingLayout />}>
                 <Route index element={<Navigate to="step-1" replace />} />
                 <Route path="step-1" element={<WeddingVendorOnboardingStep1 />} />
-                <Route path="step-2" element={<WeddingVendorOnboardingStep2 />} />
-                <Route path="step-3" element={<WeddingVendorOnboardingStep3 />} />
-                <Route path="step-4" element={<WeddingVendorOnboardingStep4 />} />
-                <Route path="step-5" element={<WeddingVendorOnboardingStep5 />} />
-                <Route path="review" element={<WeddingVendorOnboardingReview />} />
+                <Route path="step-2" element={<WeddingVendorOnboardingStep3 />} />
+                <Route path="step-3" element={<WeddingVendorOnboardingStep4 />} />
+                <Route path="step-4" element={<WeddingVendorOnboardingStep5 />} />
+                <Route path="step-5" element={<WeddingVendorOnboardingReview />} />
               </Route>
 
               {/* Vendor Main Dashboard (Protected) */}

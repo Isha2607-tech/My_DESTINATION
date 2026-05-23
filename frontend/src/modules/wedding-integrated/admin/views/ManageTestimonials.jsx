@@ -136,11 +136,11 @@ const ManageTestimonials = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex md:flex-col justify-center gap-3 min-w-[140px]">
+              <div className="flex flex-wrap md:flex-col justify-center gap-2 min-w-[110px] shrink-0">
                  {t.status !== 'approved' && (
                    <button 
                      onClick={() => handleStatusUpdate(t._id, 'approved')}
-                     className="flex-1 py-3 px-4 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                     className="flex-1 py-2 px-3 bg-emerald-50 text-emerald-600 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center gap-1.5"
                    >
                       <CheckCircle2 size={14} /> Approve
                    </button>
@@ -148,16 +148,16 @@ const ManageTestimonials = () => {
                  {t.status !== 'rejected' && (
                    <button 
                      onClick={() => handleStatusUpdate(t._id, 'rejected')}
-                     className="flex-1 py-3 px-4 bg-rose-50 text-rose-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                     className="flex-1 py-2 px-3 bg-rose-50 text-rose-600 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center gap-1.5"
                    >
                       <XCircle size={14} /> Reject
                    </button>
                  )}
                  <button 
                    onClick={() => handleDelete(t._id)}
-                   className="p-3 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                   className="flex-1 py-2 px-3 bg-slate-50 text-slate-500 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-1.5"
                  >
-                    <Trash2 size={20} />
+                    <Trash2 size={14} /> Delete
                  </button>
               </div>
            </div>

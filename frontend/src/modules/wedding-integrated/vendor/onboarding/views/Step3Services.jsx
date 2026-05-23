@@ -16,7 +16,7 @@ const Step3Services = () => {
       return;
     }
     setError("");
-    navigate("/wedding/vendor/onboarding/step-4");
+    navigate("/wedding/vendor/onboarding/step-3");
   };
 
   return (
@@ -33,7 +33,7 @@ const Step3Services = () => {
         </p>
       </section>
 
-      <ProgressBar currentStep={3} />
+      <ProgressBar currentStep={2} />
 
       <div className="max-w-2xl mx-auto px-4 pb-16 md:pb-24">
         <div className="p-5 md:p-8 rounded-2xl bg-card border border-border wedding-shadow animate-wedding-fade-up">
@@ -57,7 +57,7 @@ const Step3Services = () => {
 
           <div className="flex justify-between mt-8">
             <button
-              onClick={() => navigate("/wedding/vendor/onboarding/step-2")}
+              onClick={() => navigate("/wedding/vendor/onboarding/step-1")}
               className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-muted text-muted-foreground transition-all duration-300 hover:bg-primary/10"
             >
               <ChevronLeft className="w-4 h-4" /> Back

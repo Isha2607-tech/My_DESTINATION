@@ -60,16 +60,15 @@ const Step1BasicInfo = () => {
   // Fetch locations
   useEffect(() => {
     const fetchLocs = async () => {
-      const defaultLocs = ["Goa", "Jaipur", "Udaipur", "Mumbai", "Delhi", "Jodhpur", "Kerala", "Mussoorie", "Jim Corbett"];
       try {
         const data = await weddingService.getDestinations();
         const apiLocs = data.map(d => d.name);
-        // Combine API locations with defaults and remove duplicates
-        const combined = [...new Set([...apiLocs, ...defaultLocs])];
-        setAvailableLocations(combined);
+        // Sort alphabetically for premium presentation
+        const sorted = [...new Set(apiLocs)].sort((a, b) => a.localeCompare(b));
+        setAvailableLocations(sorted);
       } catch (error) {
         console.error("Failed to load locations", error);
-        setAvailableLocations(defaultLocs);
+        setAvailableLocations([]);
       } finally {
         setLoadingLocs(false);
       }
@@ -89,14 +88,57 @@ const Step1BasicInfo = () => {
     }
   }, [user, basicInfo.name, basicInfo.email, updateBasicInfo]);
 
+  const validateEmailDomain = (email) => {
+    if (!email) return { isValid: true };
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|org|net|co|info|edu|co\.in)$/i;
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: "Please enter a standard valid email (e.g. name@gmail.com, name@domain.in)" };
+    }
+    const parts = email.split('@');
+    if (parts.length < 2) return { isValid: false, message: "Invalid email structure" };
+    const domain = parts[1].toLowerCase();
+    
+    // Check for suspicious repeating characters in the domain (e.g. "ddddd")
+    if (/(.)\1\1/.test(domain)) {
+      return { isValid: false, message: "Suspicious spelling in email domain. Please check for typos." };
+    }
+    
+    // Check for common typos of popular email providers
+    const gmailTypos = [
+      'gamil.com', 'gmaill.com', 'gmaild.com', 'gmal.com', 'gmeil.com', 'gmaik.com', 'gamil.co',
+      'gmal.co', 'gmaill.co', 'gmaii.com', 'gmaul.com', 'gmail.con', 'gmail.coo', 'gmail.comm',
+      'gmial.com', 'gmaik.co', 'gmai.com', 'gamil.in', 'gmaill.in', 'gmaild.in'
+    ];
+    if (gmailTypos.includes(domain)) {
+      return { isValid: false, message: "Did you mean gmail.com?" };
+    }
+
+    return { isValid: true };
+  };
+
   const handleNext = async () => {
     const newErrors = {};
     if (!basicInfo.name.trim()) newErrors.name = "Business name is required";
     if (!basicInfo.category) newErrors.category = "Please select a category";
     if (!basicInfo.location) newErrors.location = "Please select a location";
     if (!basicInfo.experience) newErrors.experience = "Experience is required";
-    if (!basicInfo.phone.trim()) newErrors.phone = "Phone number is required";
-    if (!basicInfo.email.trim()) newErrors.email = "Email is required";
+    
+    if (!basicInfo.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (basicInfo.phone.replace(/\D/g, '').length !== 10) {
+      newErrors.phone = "Phone number must be exactly 10 digits";
+    }
+    
+    if (!basicInfo.email.trim()) {
+      newErrors.email = "Email is required";
+      toast.error("Email is required");
+    } else {
+      const emailCheck = validateEmailDomain(basicInfo.email.trim());
+      if (!emailCheck.isValid) {
+        newErrors.email = emailCheck.message;
+        toast.error(emailCheck.message);
+      }
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -147,7 +189,11 @@ const Step1BasicInfo = () => {
               <input
                 type="text"
                 value={basicInfo.name}
-                onChange={(e) => updateBasicInfo({ name: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                  updateBasicInfo({ name: val });
+                  if (errors.name) setErrors(prev => ({ ...prev, name: null }));
+                }}
                 placeholder="e.g. Royal Lens Photography"
                 className={inputClass}
               />
@@ -206,10 +252,13 @@ const Step1BasicInfo = () => {
                 Years of Experience *
               </label>
               <input
-                type="number"
-                min="0"
+                type="text"
                 value={basicInfo.experience}
-                onChange={(e) => updateBasicInfo({ experience: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                  updateBasicInfo({ experience: val });
+                  if (errors.experience) setErrors(prev => ({ ...prev, experience: null }));
+                }}
                 placeholder="e.g. 5"
                 className={inputClass}
               />
@@ -222,10 +271,14 @@ const Step1BasicInfo = () => {
                   Phone *
                 </label>
                 <input
-                  type="tel"
+                  type="text"
                   value={basicInfo.phone}
-                  onChange={(e) => updateBasicInfo({ phone: e.target.value })}
-                  placeholder="+91 98765 43210"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    updateBasicInfo({ phone: val });
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
+                  }}
+                  placeholder="Enter 10-digit phone"
                   className={inputClass}
                 />
                 {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
@@ -234,10 +287,19 @@ const Step1BasicInfo = () => {
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider text-muted-foreground">
                   Email *
                 </label>
-                <input
+                 <input
                   type="email"
                   value={basicInfo.email}
-                  onChange={(e) => updateBasicInfo({ email: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateBasicInfo({ email: val });
+                    const emailCheck = validateEmailDomain(val);
+                    if (val && !emailCheck.isValid) {
+                      setErrors(prev => ({ ...prev, email: emailCheck.message }));
+                    } else {
+                      setErrors(prev => ({ ...prev, email: null }));
+                    }
+                  }}
                   placeholder="you@business.com"
                   className={inputClass}
                 />

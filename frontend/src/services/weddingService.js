@@ -363,5 +363,59 @@ export const weddingService = {
     } catch (error) {
       throw error.response?.data || error.message;
     }
+  },
+
+  getAdminSupportTickets: async () => {
+    try {
+      const response = await api.get('/wedding/admin/support');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  resolveSupportTicket: async (id) => {
+    try {
+      const response = await api.patch(`/wedding/admin/support/${id}/resolve`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  resolveAllSupportTickets: async () => {
+    try {
+      const response = await api.post('/wedding/admin/support/resolve-all');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  createSupportTicket: async (data) => {
+    try {
+      const response = await api.post('/wedding/support', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  replyToSupportTicket: async (id, reply) => {
+    try {
+      const response = await api.patch(`/wedding/admin/support/${id}/reply`, { reply });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getTicketById: async (ticketId) => {
+    try {
+      const response = await api.get(`/wedding/support/${ticketId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
   }
 };

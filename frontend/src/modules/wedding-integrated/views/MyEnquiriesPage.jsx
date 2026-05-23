@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MessageSquare, ArrowLeft, Calendar, Mail, Phone, MapPin, Loader2, Sparkles } from "lucide-react";
 import { weddingEnquiryService } from "../../../services/apiService";
 import ScrollReveal from "../components/ScrollReveal";
 
 const MyEnquiriesPage = () => {
+  const navigate = useNavigate();
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,15 +45,15 @@ const MyEnquiriesPage = () => {
         
         {/* Header */}
         <div className="mb-6 md:mb-10">
-          <Link 
-            to="/wedding" 
+          <button 
+            onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary transition-colors mb-4 md:mb-6 group"
           >
             <div className="p-2 rounded-full border border-slate-200 group-hover:border-primary transition-colors bg-white shadow-sm">
               <ArrowLeft className="w-4 h-4" />
             </div>
-            Back to Home
-          </Link>
+            Back
+          </button>
 
           <ScrollReveal>
             <div className="flex flex-col gap-2">

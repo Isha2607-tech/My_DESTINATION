@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import heroImg from "../assets/bgimage.png";
 
@@ -49,7 +49,7 @@ const HeroSection = () => {
             loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
-          From royal palaces to sun-kissed beaches â€” plan your perfect
+          From royal palaces to sun-kissed beaches - plan your perfect
           celebration at India's most stunning locations
         </p>
         <div

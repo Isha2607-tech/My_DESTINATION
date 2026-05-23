@@ -1,5 +1,5 @@
 import WeddingTestimonial from '../models/WeddingTestimonial.js';
-import { uploadToCloudinary } from '../../../utils/cloudinary.js';
+import { uploadBase64ToCloudinary } from '../../../utils/cloudinary.js';
 
 // Public: Submit a testimonial
 export const submitTestimonial = async (req, res) => {
@@ -9,8 +9,8 @@ export const submitTestimonial = async (req, res) => {
     let imageUrl = image;
     if (image && image.startsWith('data:image')) {
       try {
-        const uploadResponse = await uploadToCloudinary(image, 'wedding/testimonials');
-        imageUrl = uploadResponse.secure_url;
+        const uploadResponse = await uploadBase64ToCloudinary(image, 'wedding/testimonials');
+        imageUrl = uploadResponse.url;
       } catch (uploadError) {
         console.warn('Cloudinary upload failed for testimonial image', uploadError.message);
       }

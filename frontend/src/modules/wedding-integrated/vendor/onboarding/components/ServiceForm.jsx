@@ -1,6 +1,9 @@
 import { Plus, Trash2 } from "lucide-react";
 
 const ServiceForm = ({ services = [], onAdd, onRemove, onUpdate }) => {
+  const lastService = services[services.length - 1];
+  const isLastServiceEmpty = lastService ? !lastService.name.trim() : false;
+
   return (
     <div className="space-y-4">
       {services.map((service, index) => (
@@ -42,7 +45,12 @@ const ServiceForm = ({ services = [], onAdd, onRemove, onUpdate }) => {
       <button
         type="button"
         onClick={onAdd}
-        className="w-full py-3 rounded-xl border-2 border-dashed border-border text-sm font-semibold text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center gap-2"
+        disabled={isLastServiceEmpty}
+        className={`w-full py-3 rounded-xl border-2 border-dashed border-border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+          isLastServiceEmpty 
+            ? "opacity-50 cursor-not-allowed text-muted-foreground bg-muted/20" 
+            : "text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-muted/10"
+        }`}
       >
         <Plus className="w-4 h-4" />
         Add Another Service

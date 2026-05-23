@@ -59,6 +59,14 @@ import {
   deleteTestimonial
 } from '../controllers/weddingTestimonialController.js';
 import {
+  getTickets,
+  resolveTicket,
+  resolveAllTickets,
+  createTicket,
+  replyToTicket,
+  getTicketById
+} from '../controllers/weddingSupportController.js';
+import {
   createReview,
   getVendorReviews,
   replyToReview,
@@ -92,6 +100,8 @@ router.get('/vendors', getPublicVendors);
 router.get('/vendors/:id', getVendorDetail);
 router.get('/testimonials', getApprovedTestimonials);
 router.post('/testimonials', submitTestimonial);
+router.post('/support', createTicket);
+router.get('/support/:ticketId', getTicketById);
 
 // Public Vendor Application (No auth required)
 router.post('/vendor/apply', applyAsVendor);
@@ -168,5 +178,11 @@ router.delete('/admin/categories/:id', protect, authorizedRoles('admin', 'supera
 router.get('/admin/testimonials', protect, authorizedRoles('admin', 'superadmin'), getAllTestimonials);
 router.patch('/admin/testimonials/:id/status', protect, authorizedRoles('admin', 'superadmin'), updateTestimonialStatus);
 router.delete('/admin/testimonials/:id', protect, authorizedRoles('admin', 'superadmin'), deleteTestimonial);
+
+// Admin Support Routes
+router.get('/admin/support', protect, authorizedRoles('admin', 'superadmin'), getTickets);
+router.patch('/admin/support/:id/resolve', protect, authorizedRoles('admin', 'superadmin'), resolveTicket);
+router.post('/admin/support/resolve-all', protect, authorizedRoles('admin', 'superadmin'), resolveAllTickets);
+router.patch('/admin/support/:id/reply', protect, authorizedRoles('admin', 'superadmin'), replyToTicket);
 
 export default router;

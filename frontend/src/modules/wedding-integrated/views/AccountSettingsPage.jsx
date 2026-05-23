@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, Mail, Phone, Lock, Bell, BellOff, ArrowLeft, CheckCircle2, Loader2, Camera } from "lucide-react";
+import { User, Mail, Phone, Lock, Bell, BellOff, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { userService } from "../../../services/apiService";
 import ScrollReveal from "../components/ScrollReveal";
 import { toast } from "react-hot-toast";
@@ -110,19 +110,16 @@ const AccountSettingsPage = () => {
             
             {/* Header / Avatar */}
             <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-100">
-              <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-slate-50 shadow-md relative group bg-slate-100 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-slate-50 shadow-md bg-slate-100 flex items-center justify-center">
                 {profile.profileImage ? (
                   <img 
                     src={profile.profileImage} 
                     alt={profile.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="w-10 h-10 text-slate-300" />
+                  <User className="w-10 h-10" style={{ color: "#81313A" }} />
                 )}
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
               </div>
               <div className="text-center sm:text-left">
                 <h2 className="text-2xl font-black text-foreground mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>

@@ -1,9 +1,10 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { Heart, Home, MapPin, Users, MessageSquare, Menu, X, User } from "lucide-react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Heart, Home, MapPin, Users, MessageSquare, Menu, X, User, Bell, HelpCircle, Calendar, Settings, LogOut, ChevronRight, LogIn, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
-import ProfileDrawer from "./ProfileDrawer";
+import { toast } from "react-hot-toast";
 import logoImg from "../assets/logo.png";
 import { weddingService } from "../../../services/weddingService";
+import { weddingEnquiryService } from "../../../services/apiService";
 
 const navLinks = [
   { to: "/wedding", label: "Home", icon: Home },
@@ -12,82 +13,49 @@ const navLinks = [
   { to: "/wedding/enquiry", label: "Enquiry", icon: MessageSquare },
 ];
 
-const megaMenuData = [
-  [
-    { title: "Photographers", links: [{ label: "Photographers", to: "/wedding/vendors?category=Photographers" }] },
-    {
-      title: "Makeup", links: [
-        { label: "Bridal Makeup Artists", to: "/wedding/vendors?category=Makeup" },
-        { label: "Family Makeup", tag: "WMG SERVICE", to: "/wedding/vendors?category=Makeup" }
-      ]
-    },
-    {
-      title: "Planning & Decor", links: [
-        { label: "Venue Managers", to: "/wedding/vendors?category=Venue%20Manager" },
-        { label: "Wedding Planners", to: "/wedding/vendors?category=Planning%20%26%20Decor" },
-        { label: "Decorators", to: "/wedding/vendors?category=Planning%20%26%20Decor" }
-      ]
-    },
-    { title: "Virtual Planning", links: [{ label: "Virtual planning", tag: "WMG SERVICE", to: "/wedding/vendors?category=Virtual Planning" }] },
-    { title: "Mehndi", links: [{ label: "Mehndi Artist", to: "/wedding/vendors?category=Mehndi" }] }
-  ],
-  [
-    {
-      title: "Music & Dance", links: [
-        { label: "DJs", to: "/wedding/vendors?category=Music%20%26%20Dance" },
-        { label: "Sangeet Choreographer", to: "/wedding/vendors?category=Music%20%26%20Dance" },
-        { label: "Wedding Entertainment", to: "/wedding/vendors?category=Music%20%26%20Dance" }
-      ]
-    },
-    {
-      title: "Invites & Gifts", links: [
-        { label: "Invitations", to: "/wedding/vendors?category=Invites%20%26%20Gifts" },
-        { label: "Favors", to: "/wedding/vendors?category=Invites%20%26%20Gifts" },
-        { label: "Trousseau Packers", to: "/wedding/vendors?category=Invites%20%26%20Gifts" },
-        { label: "View All Invites & Gifts", isViewAll: true, to: "/wedding/vendors?category=Invites%20%26%20Gifts" }
-      ]
-    },
-    { title: "Food", links: [{ label: "Catering Services", to: "/wedding/vendors?category=Food" }] }
-  ],
-  [
-    {
-      title: "Pre Wedding Shoot", links: [
-        { label: "Pre Wedding Shoot Locations", to: "/wedding/vendors?category=Pre Wedding Shoot" },
-        { label: "Pre Wedding Photographers", to: "/wedding/vendors?category=Pre Wedding Shoot" }
-      ]
-    },
-    {
-      title: "Bridal Wear", links: [
-        { label: "Bridal Lehengas", to: "/wedding/vendors?category=Bridal Wear" },
-        { label: "Kanjeevaram / Silk Sarees", to: "/wedding/vendors?category=Bridal Wear" },
-        { label: "View All Bridal Wear", isViewAll: true, to: "/wedding/vendors?category=Bridal Wear" }
-      ]
-    },
-    {
-      title: "Groom Wear", links: [
-        { label: "Sherwani", to: "/wedding/vendors?category=Groom Wear" },
-        { label: "Wedding Suits / Tuxes", to: "/wedding/vendors?category=Groom Wear" }
-      ]
-    }
-  ],
-  [
-    {
-      title: "Jewelry", links: [
-        { label: "Bridal Jewellery", to: "/wedding/vendors?category=Jewelry" },
-        { label: "Floral Jewellery", to: "/wedding/vendors?category=Jewelry" }
-      ]
-    },
-    { title: "Pandit Jee", links: [{ label: "Wedding Pandits", to: "/wedding/vendors?category=Pandit Jee" }] },
-    { title: "Bridal Grooming", links: [{ label: "Beauty Parlors", to: "/wedding/vendors?category=Bridal Grooming" }] },
-    { title: "Bridal Accessories", links: [{ label: "Bridal Shoes & More", to: "/wedding/vendors?category=Bridal Accessories" }] }
-  ]
-];
+// Removed hardcoded megaMenuData to ensure only real dynamic categories are shown
 
 const WeddingLayout = () => {
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const navigate = useNavigate();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifs(true);
+      const data = await weddingEnquiryService.getMyEnquiries();
+      setNotifications(data || []);
+    } catch (error) {
+      console.error("Error fetching notifs", error);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    if (storedUser && token) {
+      try { setUser(JSON.parse(storedUser)); } 
+      catch (e) { setUser(null); }
+    } else {
+      setUser(null);
+    }
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    toast.success("Logged out successfully");
+    setMobileSidebarOpen(false);
+    navigate("/");
+  };
 
   const isGallery = location.pathname.includes('/real-weddings/gallery');
   const isBookingDetail = location.pathname.match(/\/wedding\/bookings\/bk-\d+/);
@@ -95,6 +63,36 @@ const WeddingLayout = () => {
 
   const [footerDestinations, setFooterDestinations] = useState([]);
   const [footerCategories, setFooterCategories] = useState([]);
+  const [dynamicMegaMenu, setDynamicMegaMenu] = useState([[], [], [], []]);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    const handleTouchMove = (e) => {
+      if (!mobileSidebarOpen) return;
+      const sidebar = document.getElementById('mobile-sidebar-container');
+      if (sidebar && sidebar.contains(e.target)) {
+        return;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    if (mobileSidebarOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    } else {
+      document.body.style.overflow = "unset";
+      document.documentElement.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+      document.documentElement.style.overflow = "unset";
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [mobileSidebarOpen]);
 
   useEffect(() => {
     const fetchFooterData = async () => {
@@ -107,8 +105,38 @@ const WeddingLayout = () => {
         if (Array.isArray(destData)) {
           setFooterDestinations(destData.slice(0, 6));
         }
-        if (Array.isArray(catData)) {
-          setFooterCategories(catData.slice(0, 5));
+        const actualCatData = Array.isArray(catData) ? catData : (catData?.categories || []);
+
+        if (actualCatData) {
+          setFooterCategories(actualCatData.slice(0, 5));
+          
+          if (actualCatData.length > 0) {
+            // Generate Dynamic Mega Menu
+            const grouped = actualCatData.reduce((acc, cat) => {
+              const parent = cat.parentCategory || cat.name;
+              if (!acc[parent]) acc[parent] = [];
+              acc[parent].push(cat);
+              return acc;
+            }, {});
+
+            const sections = Object.entries(grouped).map(([parent, cats]) => ({
+              title: parent,
+              links: cats.map(c => ({
+                label: c.name,
+                to: `/wedding/vendors?category=${encodeURIComponent(c.name)}`,
+                tag: c.type === 'primary' ? 'PREMIUM' : undefined
+              }))
+            }));
+
+            const columns = [[], [], [], []];
+            sections.forEach((section, index) => {
+              columns[index % 4].push(section);
+            });
+            
+            setDynamicMegaMenu(columns);
+          } else {
+            setDynamicMegaMenu([[], [], [], []]);
+          }
         }
       } catch (error) {
         console.error("Footer fetch error", error);
@@ -132,9 +160,17 @@ const WeddingLayout = () => {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Link to="/wedding" className="flex items-center gap-2">
-                <img src={logoImg} alt="Weddings Logo" className="h-10 md:h-14 w-auto object-contain md:scale-110 transition-transform duration-300" />
-              </Link>
+              <div className="flex items-center gap-2 md:gap-4">
+                <button 
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <Link to="/wedding" className="flex items-center gap-2">
+                  <img src={logoImg} alt="Weddings Logo" className="h-10 md:h-14 w-auto object-contain md:scale-110 transition-transform duration-300" />
+                </Link>
+              </div>
 
               {/* Brand Text (Watermark Style) */}
               <div className="flex items-center opacity-30 hover:opacity-50 transition-opacity duration-500 cursor-default grayscale mix-blend-multiply">
@@ -192,7 +228,7 @@ const WeddingLayout = () => {
                         {/* Mega Menu Dropdown */}
                         <div className={`fixed top-[64px] left-1/2 -translate-x-1/2 w-[90vw] max-w-[1100px] bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] rounded-2xl p-8 transition-all duration-300 transform cursor-default border border-slate-100 hidden md:flex gap-8 justify-between z-[60] ${megaMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'
                           }`}>
-                          {megaMenuData.map((column, colIdx) => (
+                          {dynamicMegaMenu.map((column, colIdx) => (
                             <div key={colIdx} className="flex-1 flex flex-col gap-6">
                               {column.map((category) => (
                                 <div key={category.title}>
@@ -243,14 +279,68 @@ const WeddingLayout = () => {
                 </Link>
               </div>
 
-              {/* Profile Icon */}
-              <div className="flex items-center gap-4">
+              {/* Action Icons */}
+              <div className="flex items-center gap-2 md:gap-4 relative">
                 <button
-                  onClick={() => setProfileOpen(true)}
-                  className="p-2 rounded-full bg-[#81313A]/5 text-[#81313A] hover:bg-[#81313A]/10 transition-colors"
-                  title="Profile"
+                  onClick={() => {
+                    setNotifOpen(!notifOpen);
+                    if (!notifOpen) fetchNotifications();
+                  }}
+                  className="relative p-2 rounded-full bg-[#81313A]/5 text-[#81313A] hover:bg-[#81313A]/10 transition-colors"
+                  title="Notifications & Bookings"
                 >
-                  <User className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
+                  {/* Indicator Dot */}
+                  <span className="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                </button>
+
+                {/* Notifications Dropdown */}
+                {notifOpen && (
+                  <div className="absolute top-full right-10 md:right-12 mt-3 w-80 bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 rounded-2xl overflow-hidden z-[100] flex flex-col max-h-[400px]">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+                      <h4 className="font-bold text-slate-800">Your Notifications</h4>
+                      <Link to="/wedding/my-enquiries" onClick={() => setNotifOpen(false)} className="text-[10px] uppercase font-bold text-[#81313A] hover:underline">View All</Link>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto no-scrollbar p-2">
+                      {loadingNotifs ? (
+                        <div className="py-10 flex justify-center"><div className="w-6 h-6 border-2 border-[#81313A] border-t-transparent rounded-full animate-spin"></div></div>
+                      ) : notifications.length > 0 ? (
+                        <div className="space-y-1">
+                          {notifications.slice(0, 5).map((notif, i) => (
+                            <Link 
+                              key={notif._id || i}
+                              to="/wedding/my-enquiries"
+                              onClick={() => setNotifOpen(false)}
+                              className="block p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-2 h-2 mt-2 rounded-full shrink-0 ${notif.status === 'Booked' ? 'bg-purple-500' : notif.status === 'Contacted' ? 'bg-emerald-500' : notif.status === 'Lost' ? 'bg-rose-500' : 'bg-blue-500'}`}></div>
+                                <div>
+                                  <p className="text-xs font-semibold text-slate-800 line-clamp-1">Enquiry for {notif.weddingDate || 'TBD'}</p>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
+                                    Status updated to <span className="font-bold text-slate-700">{notif.status || 'New'}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-10 text-center">
+                          <p className="text-xs text-slate-500">No notifications yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="hidden md:block p-2 rounded-full bg-[#81313A]/5 text-[#81313A] hover:bg-[#81313A]/10 transition-colors"
+                  title="Menu"
+                >
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
@@ -258,11 +348,147 @@ const WeddingLayout = () => {
         </nav>
       )}
 
-      {/* Profile Drawer */}
-      <ProfileDrawer
-        isOpen={profileOpen}
-        onClose={() => setProfileOpen(false)}
-      />
+      {/* Main Sidebar (Desktop & Mobile) */}
+      <div className={`fixed inset-0 z-[10000] overflow-hidden ${mobileSidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
+        {/* Backdrop */}
+        <div 
+          className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${mobileSidebarOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setMobileSidebarOpen(false)}
+          style={{ touchAction: 'none' }}
+        />
+        {/* Sidebar */}
+        <div id="mobile-sidebar-container" className={`absolute top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="p-5 pt-8 border-b border-slate-100 flex items-start justify-between shrink-0">
+            <div className="flex flex-col gap-3">
+              {user ? (
+                <>
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20 shadow-sm flex items-center justify-center bg-slate-50">
+                    {user.profileImage || user.avatar ? (
+                      <img src={user.profileImage || user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-6 h-6 text-[#81313A]" />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800" style={{ fontFamily: "'Playfair Display', serif" }}>{user.name}</h2>
+                    <Link to="/wedding/settings" onClick={() => setMobileSidebarOpen(false)} className="text-[10px] font-bold text-slate-500 hover:text-[#81313A] uppercase tracking-widest flex items-center gap-1 mt-1">
+                      View profile <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <img src={logoImg} alt="Logo" className="h-10 object-contain" />
+              )}
+            </div>
+            <button onClick={() => setMobileSidebarOpen(false)} className="p-2 text-slate-400 bg-slate-50 rounded-full hover:text-[#81313A] hover:bg-[#81313A]/10">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto py-4 px-4 space-y-2 no-scrollbar" style={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "none" }}>
+            {navLinks.map(link => (
+              <div key={link.to}>
+                <Link 
+                  to={link.to} 
+                  onClick={() => {
+                    if (link.label !== "Vendors") setMobileSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-3 py-2 text-slate-700 font-bold text-[15px]"
+                >
+                  <div className="w-8 h-8 rounded-full bg-[#81313A]/10 flex items-center justify-center text-[#81313A]">
+                    <link.icon className="w-4 h-4" />
+                  </div>
+                  {link.label}
+                </Link>
+                {/* Dynamic Vendor Categories */}
+                {link.label === "Vendors" && dynamicMegaMenu && (
+                  <div className="pl-4 pt-3 pb-2 space-y-5 border-l-2 border-slate-100 ml-4 mt-2">
+                    {dynamicMegaMenu.flat().map((category, idx) => {
+                      if (!category || !category.title) return null;
+                      return (
+                        <div key={idx}>
+                          <h4 className="text-[11px] font-black text-[#81313A] mb-3 uppercase tracking-[0.1em]">{category.title}</h4>
+                          <ul className="flex flex-col gap-3">
+                            {category.links.map(sub => (
+                              <li key={sub.label}>
+                                <Link 
+                                  to={sub.to}
+                                  onClick={() => setMobileSidebarOpen(false)}
+                                  className="text-[13px] font-medium text-slate-500 hover:text-[#81313A] flex items-center gap-2"
+                                >
+                                  {sub.label}
+                                  {sub.tag && (
+                                    <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 border border-emerald-200 rounded shadow-sm font-bold tracking-wider">
+                                      {sub.tag}
+                                    </span>
+                                  )}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            
+            {/* Divider */}
+            <div className="my-4 border-t border-slate-100"></div>
+            
+            {/* Profile Items */}
+            {[
+              { icon: Calendar, label: "My Bookings", to: "/wedding/bookings" },
+              { icon: Heart, label: "Saved Destinations", to: "/wedding/saved" },
+              { icon: Users, label: "Wedding Planner", to: "/wedding/planners" },
+              { icon: MessageSquare, label: "My Enquiries", to: "/wedding/my-enquiries" },
+              { icon: Clock, label: "My Support Tickets", to: "/wedding/support#my-tickets" },
+              { icon: Settings, label: "Account Settings", to: "/wedding/settings" },
+            ].map((item, i) => (
+              <Link
+                key={i}
+                to={user ? item.to : "/wedding/login"}
+                onClick={() => setMobileSidebarOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-2xl hover:bg-[#81313A]/5 transition-all group"
+              >
+                <div className="p-2 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-[#81313A]/10 group-hover:text-[#81313A] transition-all">
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <span className="flex-1 text-[13px] font-bold text-slate-600 group-hover:text-[#81313A] transition-colors">
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="p-5 border-t border-slate-100 bg-slate-50 shrink-0">
+            {user ? (
+              <button 
+                className="w-full flex items-center gap-3 p-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all font-bold border border-transparent hover:border-red-100"
+                onClick={handleLogout}
+              >
+                <div className="p-2 rounded-xl bg-red-50 text-red-500 shadow-sm">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span className="text-sm">Log out</span>
+              </button>
+            ) : (
+              <Link 
+                to="/wedding/login"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="w-full flex items-center justify-center gap-3 p-3 rounded-2xl text-white bg-[#81313A] hover:bg-[#81313A]/90 transition-all font-bold shadow-md"
+              >
+                <div className="p-2 rounded-xl bg-white/10 text-white">
+                  <LogIn className="w-4 h-4" />
+                </div>
+                <span className="text-sm">Log In / Sign Up</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+
+
 
       {/* Content */}
       <main className={`${!hideNav ? 'pt-16' : ''} ${location.pathname !== "/wedding" && location.pathname !== "/wedding/" && !hideNav ? "pb-24 md:pb-16" : ""}`}>

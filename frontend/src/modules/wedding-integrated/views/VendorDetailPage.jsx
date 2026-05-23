@@ -68,7 +68,7 @@ const VendorDetailPage = () => {
   const [shortlisted, setShortlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: "", phone: "", email: "", date: "", message: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", date: "", message: "", packageType: "Base Package" });
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -137,13 +137,32 @@ const VendorDetailPage = () => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await weddingEnquiryService.createEnquiry({
+      
+      let calculatedBudget = "";
+      if (formData.packageType === "Premium Package" && vendor.price?.premium) {
+        calculatedBudget = `₹${vendor.price.premium.toLocaleString()}`;
+      } else if (typeof vendor.price === 'object' && vendor.price.base) {
+        calculatedBudget = `₹${vendor.price.base.toLocaleString()}`;
+      } else if (vendor.startingPrice) {
+        calculatedBudget = `₹${vendor.startingPrice.toLocaleString()}`;
+      } else if (typeof vendor.price === 'number' || typeof vendor.price === 'string') {
+        calculatedBudget = `₹${vendor.price}`;
+      }
+
+      const payload = {
         ...formData,
+        message: `[Interested In: ${formData.packageType}]\n\n${formData.message || "Please share more details."}`,
         targetType: vendor.isVenue || vendor.capacity ? "Venue" : "Vendor",
         targetId: vendor._id
-      });
+      };
+
+      if (calculatedBudget) {
+        payload.budget = calculatedBudget;
+      }
+
+      await weddingEnquiryService.createEnquiry(payload);
       toast.success("Enquiry sent!");
-      setFormData({ name: "", phone: "", email: "", date: "", message: "" });
+      setFormData({ name: "", phone: "", email: "", date: "", message: "", packageType: "Base Package" });
     } catch (err) {
       toast.error(err.message || "Failed to send");
     } finally {
@@ -201,7 +220,7 @@ const VendorDetailPage = () => {
             {activeTab === "Projects" && (
               <div>
                 <div className="flex gap-4 border-b border-slate-100 mb-6">
-                  {["Portfolio", "Albums"].map(s => (
+                  {["Portfolio", "Albums", "Videos"].map(s => (
                     <button key={s} onClick={() => setProjectsSubTab(s)} className={`pb-2 text-[11px] font-bold uppercase tracking-widest ${projectsSubTab === s ? "text-primary border-b-2 border-primary" : "text-slate-400"}`}>{s}</button>
                   ))}
                 </div>
@@ -213,7 +232,61 @@ const VendorDetailPage = () => {
                       </div>
                     ))}
                   </div>
-                ) : <div className="py-12 text-center text-slate-400 italic">No albums yet.</div>}
+                ) : projectsSubTab === "Albums" ? (
+                  vendor.albums?.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {vendor.albums.map((album, idx) => (
+                        <div key={idx} className="group cursor-pointer" onClick={() => setLightbox({ images: album.images, idx: 0 })}>
+                          <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-100">
+                            <img src={album.cover || album.images?.[0] || 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc'} alt={album.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5" /> View {album.images?.length || 0} Photos
+                              </div>
+                            </div>
+                          </div>
+                          <h4 className="font-bold text-slate-800 text-sm truncate">{album.name}</h4>
+                          <p className="text-xs text-slate-500 mb-2">{album.images?.length || 0} Photos</p>
+                          
+                          {album.images?.length > 1 && (
+                            <div className="flex gap-1.5 w-full">
+                              {album.images.slice(1, 5).map((img, i) => (
+                                <div key={i} className="flex-1 aspect-[4/3] rounded-lg overflow-hidden bg-slate-100">
+                                  <img src={img} alt="" className="w-full h-full object-cover" />
+                                </div>
+                              ))}
+                              {album.images.length > 5 && (
+                                <div className="flex-1 aspect-[4/3] rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 text-[10px] font-bold">
+                                  +{album.images.length - 5}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : <div className="py-12 text-center text-slate-400 italic">No albums added yet.</div>
+                ) : (
+                  vendor.videos?.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {vendor.videos.map((vid, idx) => {
+                        const match = vid.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+                        const videoId = match ? match[1] : null;
+                        if (!videoId) return null;
+                        return (
+                          <div key={idx} className="aspect-video rounded-xl overflow-hidden bg-black shadow-sm">
+                            <iframe 
+                              src={`https://www.youtube.com/embed/${videoId}`} 
+                              title={`Video ${idx}`}
+                              className="w-full h-full border-0"
+                              allowFullScreen 
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : <div className="py-12 text-center text-slate-400 italic">No videos added yet.</div>
+                )}
               </div>
             )}
 
@@ -221,11 +294,29 @@ const VendorDetailPage = () => {
               <div className="prose prose-slate max-w-none">
                 <h3 className="text-xl font-bold mb-4">About {vendor.name}</h3>
                 <p className="text-slate-600 leading-relaxed">{vendor.about || vendor.description || "Leading professional in the wedding industry."}</p>
-                {vendor.services?.length > 0 && (
-                  <div className="mt-8">
-                    <h4 className="font-bold mb-4">Services Offered</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {vendor.services.map(s => <div key={s} className="flex items-center gap-2 text-sm text-slate-600"><CheckCircle className="w-4 h-4 text-green-500" /> {s}</div>)}
+                
+                {typeof vendor.price === 'object' && (vendor.price.baseFeatures || vendor.price.premiumFeatures) && (
+                  <div className="mt-10 pt-8 border-t border-slate-100">
+                    <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
+                      <span className="text-xl">📋</span> Package Details
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {vendor.price.baseFeatures && (
+                        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-full h-1 bg-slate-300"></div>
+                          <h5 className="font-bold text-[15px] text-slate-800 mb-3 tracking-wide uppercase">Base Package</h5>
+                          <p className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">{vendor.price.baseFeatures}</p>
+                        </div>
+                      )}
+                      {vendor.price.premiumFeatures && (
+                        <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 p-6 rounded-2xl border border-amber-200/60 shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 left-0 w-full h-1 bg-amber-400"></div>
+                          <h5 className="font-bold text-[15px] text-amber-900 mb-3 tracking-wide uppercase flex items-center gap-2">
+                            <span>👑</span> Premium Package
+                          </h5>
+                          <p className="text-[13px] text-amber-900/80 leading-relaxed whitespace-pre-wrap">{vendor.price.premiumFeatures}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -240,14 +331,51 @@ const VendorDetailPage = () => {
 
         <aside className="w-full lg:w-[350px] space-y-6">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-            <div className="mb-6">
-              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Starting Price</span>
-              <div className="text-3xl font-black text-primary">
-                {typeof vendor.price === 'object' 
-                  ? (vendor.price.base ? `₹${vendor.price.base.toLocaleString()}` : 'Contact')
-                  : (vendor.price || (vendor.startingPrice ? `₹${(vendor.startingPrice / 100000).toFixed(1)}L` : 'Contact'))}
+            {typeof vendor.price === 'object' && vendor.price.premium && (
+              <div className="flex bg-slate-50 p-1 rounded-xl mb-6">
+                <button 
+                  onClick={() => setFormData({...formData, packageType: "Base Package"})}
+                  className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all ${formData.packageType === "Base Package" ? "bg-white shadow-sm text-primary" : "text-slate-400 hover:text-slate-600"}`}
+                >
+                  Base
+                </button>
+                <button 
+                  onClick={() => setFormData({...formData, packageType: "Premium Package"})}
+                  className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1 ${formData.packageType === "Premium Package" ? "bg-white shadow-sm text-amber-500" : "text-slate-400 hover:text-slate-600"}`}
+                >
+                  <span className="text-[10px]">👑</span> Premium
+                </button>
               </div>
+            )}
+            
+            <div className="mb-6">
+              {formData.packageType === "Base Package" || !vendor.price?.premium ? (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <span className="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Base Package Price</span>
+                  <div className="text-3xl font-black text-primary">
+                    {typeof vendor.price === 'object' 
+                      ? (vendor.price.base ? `₹${vendor.price.base.toLocaleString()}` : 'Contact')
+                      : (vendor.price || (vendor.startingPrice ? `₹${(vendor.startingPrice / 100000).toFixed(1)}L` : 'Contact'))}
+                  </div>
+                  {typeof vendor.price === 'object' && vendor.price.baseFeatures && (
+                    <p className="text-xs text-slate-500 mt-2 italic">{vendor.price.baseFeatures}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <span className="text-amber-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
+                    👑 Premium Package Price
+                  </span>
+                  <div className="text-3xl font-black text-slate-800 mt-0.5">
+                    ₹{vendor.price.premium.toLocaleString()}
+                  </div>
+                  {vendor.price.premiumFeatures && (
+                    <p className="text-xs text-slate-500 mt-2 italic">{vendor.price.premiumFeatures}</p>
+                  )}
+                </div>
+              )}
             </div>
+            
             <form onSubmit={handleEnquirySubmit} className="space-y-4">
               <input type="text" placeholder="Your Name" required className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               <input type="email" placeholder="Email Address" required className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
@@ -270,11 +398,31 @@ const ReviewsTab = ({ vendor, reviews }) => {
   const [comment, setComment] = useState("");
   const [reviewName, setReviewName] = useState("");
   const [reviewEmail, setReviewEmail] = useState("");
+  const [nameError, setNameError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(3);
+
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    setReviewName(val);
+    // Name must be at least 3 characters and only contain letters, spaces, etc.
+    setNameError(val.length > 0 && !/^[A-Za-z\s.'-]{3,}$/.test(val));
+  };
+
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    setReviewEmail(val);
+    // Standard robust email regex
+    setEmailError(val.length > 0 && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(val));
+  };
 
   const handleReviewSubmit = async () => {
     if (starRating === 0 || !comment.trim() || !reviewName.trim() || !reviewEmail.trim()) {
       return toast.error("Rating, Name, Email, and Comment are required");
+    }
+    if (nameError || emailError) {
+      return toast.error("Please provide valid Name and Email format");
     }
     try {
       setSubmitting(true);
@@ -321,28 +469,47 @@ const ReviewsTab = ({ vendor, reviews }) => {
       </div>
 
       <div className="space-y-6">
-        {reviews.map(r => (
-          <div key={r._id} className="border-b border-slate-100 pb-6">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"><User className="w-5 h-5 text-slate-400" /></div>
-                <div>
-                  <div className="text-sm font-bold">{r.name || r.userName || "Customer"}</div>
-                  <div className="text-[10px] text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</div>
+        {reviews.slice(0, visibleCount).map(r => (
+          <div key={r._id} className="border-b border-slate-100 py-5 first:pt-0 last:border-0">
+            <div className="flex items-start gap-3 md:gap-4 mb-3">
+              <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center mt-1">
+                <User className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-[13px] md:text-sm font-bold text-slate-800">{r.name || r.userName || "Customer"}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{new Date(r.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-600 text-[10px] md:text-xs px-2 py-0.5 rounded-md font-bold shadow-sm">
+                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> {r.rating}
+                  </div>
                 </div>
+                <p className="text-[13px] md:text-sm text-slate-600 mt-2 leading-relaxed">"{r.comment}"</p>
+                
+                {r.reply && (
+                  <div className="mt-3 md:mt-4 bg-slate-50 rounded-r-xl rounded-l-sm border-l-[3px] border-primary p-3 md:p-4">
+                    <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <MessageSquare className="w-3 h-3" /> Reply from Vendor
+                    </div>
+                    <p className="text-[12px] md:text-[13px] text-slate-600 leading-relaxed">{r.reply}</p>
+                  </div>
+                )}
               </div>
-              <div className="bg-green-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">★ {r.rating}</div>
             </div>
-            <p className="text-sm text-slate-600 italic">"{r.comment}"</p>
-            {r.vendorReply && (
-              <div className="mt-4 ml-8 p-4 bg-slate-50 rounded-xl border-l-4 border-primary">
-                <div className="text-[10px] font-bold text-primary uppercase mb-1">Reply from Vendor</div>
-                <p className="text-xs text-slate-500 italic">{r.vendorReply}</p>
-              </div>
-            )}
           </div>
         ))}
         {reviews.length === 0 && <p className="text-slate-400 italic">No reviews yet. Be the first to review!</p>}
+        {reviews.length > visibleCount && (
+          <div className="pt-2 text-center">
+            <button 
+              onClick={() => setVisibleCount(reviews.length)} 
+              className="text-primary font-bold text-[13px] uppercase tracking-wider px-6 py-2.5 border-2 border-primary/20 rounded-xl hover:bg-primary/5 transition-colors"
+            >
+              Read more reviews
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
@@ -355,8 +522,22 @@ const ReviewsTab = ({ vendor, reviews }) => {
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <input type="text" placeholder="Your Name" value={reviewName} onChange={e => setReviewName(e.target.value)} className="w-full p-3 bg-white rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" />
-          <input type="email" placeholder="Your Email" value={reviewEmail} onChange={e => setReviewEmail(e.target.value)} className="w-full p-3 bg-white rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" />
+          <input 
+            type="text" 
+            placeholder="Your Name" 
+            value={reviewName} 
+            onChange={handleNameChange} 
+            className="w-full p-3 bg-white rounded-xl text-sm outline-none transition-colors border-2 focus:ring-2 focus:ring-primary"
+            style={nameError ? { borderColor: '#ef4444', outlineColor: '#ef4444', color: '#ef4444', boxShadow: '0 0 0 2px #ef4444' } : { borderColor: 'transparent' }}
+          />
+          <input 
+            type="email" 
+            placeholder="Your Email" 
+            value={reviewEmail} 
+            onChange={handleEmailChange} 
+            className="w-full p-3 bg-white rounded-xl text-sm outline-none transition-colors border-2 focus:ring-2 focus:ring-primary"
+            style={emailError ? { borderColor: '#ef4444', outlineColor: '#ef4444', color: '#ef4444', boxShadow: '0 0 0 2px #ef4444' } : { borderColor: 'transparent' }}
+          />
         </div>
         <textarea placeholder="Your experience..." className="w-full p-4 bg-white rounded-xl text-sm border-none focus:ring-1 focus:ring-primary min-h-[100px] mb-4" value={comment} onChange={e => setComment(e.target.value)} />
         <button onClick={handleReviewSubmit} disabled={submitting} className="px-8 py-3 bg-primary text-white font-bold rounded-xl text-sm shadow-md disabled:opacity-50">

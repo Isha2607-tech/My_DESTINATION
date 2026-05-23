@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, ArrowRight, Loader2, Shield } from 'lucide-react';
+import { Phone, ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import leafBg from '../../assets/leaf_background.png';
-import logo from '../../assets/rokologin-removebg-preview.png';
+import weddingBg from '../../assets/wedding_login_bg.png';
 import { authService } from '../../services/apiService';
 import toast from 'react-hot-toast';
 
-const UserLogin = () => {
+const UserLogin = ({ theme = 'hotel' }) => {
+    const isWedding = theme === 'wedding';
+    // Color tokens based on theme
+    const primary   = isWedding ? '#81313A' : '#39593f';
+    const light     = isWedding ? '#A3716A' : '#A3B18A';
+    const faint     = isWedding ? '#DAC9C9' : '#DAD7CD';
+    const bgImage   = isWedding ? weddingBg : leafBg;
     const navigate = useNavigate();
     const location = useLocation();
     const [step, setStep] = useState(1);
@@ -156,18 +162,20 @@ const UserLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9F5] flex flex-col font-sans selection:bg-[#39593f] selection:text-white overflow-hidden relative">
-            {/* Top Nature Plate */}
+        <div className="min-h-screen bg-[#F8F9F5] flex flex-col font-sans overflow-hidden relative"
+            style={{ selection: undefined }}>
+            {/* Top Image Plate */}
             <div className="relative h-[45dvh] w-full overflow-hidden">
                 <img
-                    src={leafBg}
-                    alt="Nature"
+                    src={bgImage}
+                    alt={isWedding ? 'Wedding' : 'Nature'}
                     className="w-full h-full object-cover"
                 />
+                {/* Dark overlay for wedding image readability */}
+                {isWedding && (
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-transparent" />
+                )}
 
-                {/* Branding Overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                </div>
             </div>
 
             {/* Curvy Form Card */}
@@ -191,8 +199,12 @@ const UserLogin = () => {
 
                 <div className="max-w-sm mx-auto h-full flex flex-col px-8 pt-4">
                     <div className="mb-8 text-center">
-                        <h2 className="text-2xl font-black text-[#39593f]">Welcome Back</h2>
-                        <p className="text-[#A3B18A] text-sm font-bold mt-1">Login to continue your journey</p>
+                        <h2 className="text-2xl font-black" style={{ color: primary }}>
+                            Welcome Back
+                        </h2>
+                        <p className="text-sm font-bold mt-1" style={{ color: light }}>
+                            {isWedding ? 'Login to plan your dream wedding' : 'Login to continue your journey'}
+                        </p>
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -206,11 +218,14 @@ const UserLogin = () => {
                             >
                                 <form onSubmit={handleSendOTP} className="space-y-6">
                                     <div className="relative group">
-                                        <label className="text-[#39593f] font-black text-[10px] uppercase tracking-widest block mb-1 px-1">
+                                        <label className="font-black text-[10px] uppercase tracking-widest block mb-1 px-1" style={{ color: primary }}>
                                             Mobile Number
                                         </label>
-                                        <div className="flex items-center bg-[#F8F9F5] rounded-2xl border-2 border-transparent transition-all focus-within:border-[#A3B18A] focus-within:bg-white h-14 shadow-sm">
-                                            <div className="pl-5 pr-3 text-[#39593f] font-black border-r border-[#DAD7CD] h-8 flex items-center">
+                                        <div className="flex items-center bg-[#F8F9F5] rounded-2xl border-2 border-transparent transition-all h-14 shadow-sm"
+                                            style={{ '--tw-ring-color': light }}
+                                            onFocus={e => e.currentTarget.style.borderColor = light}
+                                            onBlur={e => e.currentTarget.style.borderColor = 'transparent'}>
+                                            <div className="pl-5 pr-3 font-black border-r h-8 flex items-center" style={{ color: primary, borderColor: faint }}>
                                                 <span className="text-sm">+91</span>
                                             </div>
                                             <input
@@ -221,7 +236,8 @@ const UserLogin = () => {
                                                     if (val.length <= 10) setPhone(val);
                                                 }}
                                                 placeholder="9876543210"
-                                                className="flex-1 bg-transparent px-4 text-[#39593f] font-black placeholder:text-[#DAD7CD]/80 outline-none w-full h-full text-lg"
+                                                className="flex-1 bg-transparent px-4 font-black outline-none w-full h-full text-lg"
+                                                style={{ color: primary }}
                                                 required
                                             />
                                         </div>
@@ -240,7 +256,8 @@ const UserLogin = () => {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full bg-[#39593f] text-white h-14 rounded-2xl font-black text-sm shadow-xl shadow-[#39593f]/30 hover:bg-[#39593f] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 transform"
+                                        className="w-full text-white h-14 rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        style={{ backgroundColor: primary, boxShadow: `0 8px 24px ${primary}40` }}
                                     >
                                         {loading ? (
                                             <Loader2 size={20} className="animate-spin" />
@@ -261,9 +278,9 @@ const UserLogin = () => {
                                 className="space-y-4"
                             >
                                 <div className="text-center">
-                                    <h3 className="text-xl font-black text-[#39593f]">Enter OTP</h3>
-                                    <p className="text-[#A3B18A] text-xs mt-1 font-bold">
-                                        Sent to <span className="text-[#39593f] font-black">+91 {phone}</span>
+                                    <h3 className="text-xl font-black" style={{ color: primary }}>Enter OTP</h3>
+                                    <p className="text-xs mt-1 font-bold" style={{ color: light }}>
+                                        Sent to <span className="font-black" style={{ color: primary }}>+91 {phone}</span>
                                     </p>
                                 </div>
 
@@ -283,7 +300,8 @@ const UserLogin = () => {
                                                         document.getElementById(`otp-${index - 1}`)?.focus();
                                                     }
                                                 }}
-                                                className="w-11 h-14 bg-[#F8F9F5] border-2 border-transparent rounded-2xl text-center text-[#39593f] text-2xl font-black focus:border-[#A3B18A] focus:bg-white outline-none transition-all shadow-sm"
+                                        className="w-11 h-14 bg-[#F8F9F5] border-2 border-transparent rounded-2xl text-center text-2xl font-black outline-none transition-all shadow-sm"
+                                                style={{ color: primary }}
                                                 autoFocus={index === 0}
                                             />
                                         ))}
@@ -312,7 +330,8 @@ const UserLogin = () => {
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="w-full bg-[#39593f] text-white h-14 rounded-2xl font-black text-sm shadow-xl shadow-[#39593f]/30 hover:bg-[#39593f] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                            className="w-full text-white h-14 rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                            style={{ backgroundColor: primary, boxShadow: `0 8px 24px ${primary}40` }}
                                         >
                                             {loading ? <Loader2 size={20} className="animate-spin" /> : 'Login'}
                                         </button>
@@ -331,15 +350,25 @@ const UserLogin = () => {
                     </AnimatePresence>
 
                     <div className="mt-auto pt-4 text-center">
-                        <p className="text-[#A3B18A] text-sm font-bold">
-                            New to My Destination?{' '}
+                        <p className="text-sm font-bold" style={{ color: light }}>
+                            New to {isWedding ? 'Destination Weddings' : 'My Destination'}?{' '}
                             <button
                                 onClick={() => navigate('/signup')}
-                                className="text-[#39593f] font-black hover:underline ml-1 px-1"
+                                className="font-black hover:underline ml-1 px-1"
+                                style={{ color: primary }}
                             >
                                 Create Account
                             </button>
                         </p>
+                        {isWedding ? (
+                            <button onClick={() => navigate('/login')} className="mt-2 text-xs font-bold opacity-40 hover:opacity-70 transition" style={{ color: primary }}>
+                                Looking for Hotels? →
+                            </button>
+                        ) : (
+                            <button onClick={() => navigate('/wedding/login')} className="mt-2 text-xs font-bold opacity-40 hover:opacity-70 transition" style={{ color: primary }}>
+                                Planning a Wedding? →
+                            </button>
+                        )}
                     </div>
                 </div>
             </motion.main>

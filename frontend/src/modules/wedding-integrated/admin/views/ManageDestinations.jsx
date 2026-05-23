@@ -24,7 +24,16 @@ const ManageDestinations = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const categories = ['Heritage', 'Beach', 'Hill', 'Resort'];
+  const categories = [
+    'Heritage', 
+    'Beach', 
+    'Hill', 
+    'Resort',
+    'Temple / Spiritual',
+    'Desert',
+    'Lake',
+    'Forest / Wildlife'
+  ];
   const [editingDest, setEditingDest] = useState(null);
   const [newDest, setNewDest] = useState({
     name: '',

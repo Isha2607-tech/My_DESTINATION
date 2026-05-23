@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Star, DollarSign, Info, Navigation, CheckCircle, Car, Activity, Hotel, Umbrella, HandCoins, Briefcase } from 'lucide-react';
 import logo from '../assets/rokologin-removebg-preview.png';
 import heroBg from '../assets/landing/hero_travel1.png';
@@ -16,9 +16,47 @@ import tourImg from '../assets/landing/tour.jpg';
 import { Facebook, Twitter, Instagram, Menu, X } from 'lucide-react';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+
+  // Check login before navigating to protected pages
+  const handleNavigation = (targetPath) => {
+    const mainToken = localStorage.getItem('token');
+    const taxiToken = localStorage.getItem('taxiUserToken');
+
+    if (targetPath === '/taxi/user') {
+      // Taxi (Tours) routes need taxiUserToken — taxi has its own login
+      if (!taxiToken) {
+        navigate('/taxi/user/login');
+      } else {
+        navigate(targetPath);
+      }
+    } else if (targetPath === '/wedding') {
+      // Wedding/Destination uses dedicated wedding login page
+      if (!mainToken) {
+        navigate('/wedding/login', { state: { from: { pathname: '/wedding' } } });
+      } else {
+        navigate('/wedding');
+      }
+    } else if (targetPath === '/home') {
+      // Hotel route needs main app token
+      if (!mainToken) {
+        navigate('/login', { state: { from: { pathname: targetPath } } });
+      } else {
+        navigate(targetPath);
+      }
+    } else {
+      // Generic fallback
+      if (!mainToken) {
+        navigate('/login', { state: { from: { pathname: targetPath } } });
+      } else {
+        navigate(targetPath);
+      }
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     if (isContactModalOpen || isJoinModalOpen) {
@@ -54,9 +92,9 @@ const LandingPage = () => {
           {/* Desktop Menu */}
           <div className="hidden lg:flex gap-10 text-white/90 text-sm font-bold tracking-wide">
             <a href="#" className="text-emerald-400 transition">Home</a>
-            <Link to="/taxi/user" className="hover:text-emerald-400 transition">Tours</Link>
-            <Link to="/welcome?type=tour" className="hover:text-emerald-400 transition">Destination</Link>
-            <Link to="/welcome?type=hotel" className="hover:text-emerald-400 transition">Hotel</Link>
+            <button onClick={() => handleNavigation('/taxi/user')} className="hover:text-emerald-400 transition font-bold">Tours</button>
+            <button onClick={() => handleNavigation('/wedding')} className="hover:text-emerald-400 transition font-bold">Destination</button>
+            <button onClick={() => handleNavigation('/home')} className="hover:text-emerald-400 transition font-bold">Hotel</button>
             <a href="#about" className="hover:text-emerald-400 transition">About us</a>
             <button 
               onClick={() => setIsContactModalOpen(true)} 
@@ -80,9 +118,9 @@ const LandingPage = () => {
           <div className="absolute top-[80px] left-0 w-full bg-black/40 backdrop-blur-2xl z-40 lg:hidden border-b border-white/20 shadow-2xl">
             <div className="flex flex-col px-8 py-6 gap-6 text-white/90 text-base font-bold tracking-wide">
               <a href="#" onClick={() => setIsMobileMenuOpen(false)} className="text-emerald-400 transition border-b border-white/10 pb-2">Home</a>
-              <Link to="/taxi/user" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-emerald-400 transition border-b border-white/10 pb-2">Tours</Link>
-              <Link to="/welcome?type=tour" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-emerald-400 transition border-b border-white/10 pb-2">Destination</Link>
-              <Link to="/welcome?type=hotel" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-emerald-400 transition border-b border-white/10 pb-2">Hotel</Link>
+              <button onClick={() => handleNavigation('/taxi/user')} className="text-left hover:text-emerald-400 transition border-b border-white/10 pb-2 font-bold">Tours</button>
+              <button onClick={() => handleNavigation('/wedding')} className="text-left hover:text-emerald-400 transition border-b border-white/10 pb-2 font-bold">Destination</button>
+              <button onClick={() => handleNavigation('/home')} className="text-left hover:text-emerald-400 transition border-b border-white/10 pb-2 font-bold">Hotel</button>
               <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-emerald-400 transition border-b border-white/10 pb-2">About us</a>
               <button 
                 onClick={() => {

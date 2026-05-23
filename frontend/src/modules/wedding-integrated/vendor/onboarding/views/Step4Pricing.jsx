@@ -9,13 +9,46 @@ const Step4Pricing = () => {
   const { pricing, updatePricing, isStepValid } = useVendorForm();
   const [error, setError] = useState("");
 
+  const handleBasePriceChange = (val) => {
+    updatePricing({ basePrice: val });
+    const base = Number(val) || 0;
+    const premium = Number(pricing.premiumPrice) || 0;
+    
+    if (pricing.premiumPrice && premium < base) {
+      setError("Premium package price cannot be less than the Base package price.");
+    } else {
+      setError("");
+    }
+  };
+
+  const handlePremiumPriceChange = (val) => {
+    updatePricing({ premiumPrice: val });
+    const base = Number(pricing.basePrice) || 0;
+    const premium = Number(val) || 0;
+    
+    if (val && premium < base) {
+      setError("Premium package price cannot be less than the Base package price.");
+    } else {
+      setError("");
+    }
+  };
+
   const handleNext = () => {
     if (!isStepValid(4)) {
       setError("Base price is required.");
       return;
     }
+    
+    const base = Number(pricing.basePrice) || 0;
+    const premium = Number(pricing.premiumPrice) || 0;
+    
+    if (pricing.premiumPrice && premium < base) {
+      setError("Premium package price cannot be less than the Base package price.");
+      return;
+    }
+    
     setError("");
-    navigate("/wedding/vendor/onboarding/step-5");
+    navigate("/wedding/vendor/onboarding/step-4");
   };
 
   const inputClass =
@@ -35,7 +68,7 @@ const Step4Pricing = () => {
         </p>
       </section>
 
-      <ProgressBar currentStep={4} />
+      <ProgressBar currentStep={3} />
 
       <div className="max-w-2xl mx-auto px-4 pb-16 md:pb-24">
         <div className="p-5 md:p-8 rounded-2xl bg-card border border-border wedding-shadow animate-wedding-fade-up">
@@ -57,12 +90,12 @@ const Step4Pricing = () => {
                   type="number"
                   min="0"
                   value={pricing.basePrice}
-                  onChange={(e) => updatePricing({ basePrice: e.target.value })}
+                  onChange={(e) => handleBasePriceChange(e.target.value)}
                   placeholder="e.g. 150000"
                   className={`${inputClass} pl-10`}
                 />
               </div>
-              {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+              {error && error.includes("Base") && <p className="text-xs text-destructive mt-1">{error}</p>}
             </div>
 
             <div>
@@ -75,11 +108,12 @@ const Step4Pricing = () => {
                   type="number"
                   min="0"
                   value={pricing.premiumPrice}
-                  onChange={(e) => updatePricing({ premiumPrice: e.target.value })}
+                  onChange={(e) => handlePremiumPriceChange(e.target.value)}
                   placeholder="e.g. 350000"
                   className={`${inputClass} pl-10`}
                 />
               </div>
+              {error && error.includes("Premium") && <p className="text-xs text-destructive mt-1">{error}</p>}
             </div>
 
             <div>
@@ -98,7 +132,7 @@ const Step4Pricing = () => {
 
           <div className="flex justify-between mt-8">
             <button
-              onClick={() => navigate("/wedding/vendor/onboarding/step-3")}
+              onClick={() => navigate("/wedding/vendor/onboarding/step-2")}
               className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-muted text-muted-foreground transition-all duration-300 hover:bg-primary/10"
             >
               <ChevronLeft className="w-4 h-4" /> Back

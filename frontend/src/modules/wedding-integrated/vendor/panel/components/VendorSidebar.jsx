@@ -17,7 +17,6 @@ import {
 const allNavItems = [
   { id: "dashboard", label: "Vendor Dashboard", icon: LayoutDashboard, path: "/wedding/vendor/dashboard", venueOnly: false },
   { id: "profile", label: "Vendor Profile", icon: UserCircle, path: "/wedding/vendor/profile", venueOnly: false },
-  { id: "work", label: "Portfolio & Work", icon: ImageIcon, path: "/wedding/vendor/work", venueOnly: false },
   { id: "add-venue", label: "Add Venue", icon: Building2, path: "/wedding/vendor/venues/add", venueOnly: true },
   { id: "my-venues", label: "My Venues", icon: Building2, path: "/wedding/vendor/venues/my", venueOnly: true },
   { id: "leads", label: "Enquiry Inbox", icon: MessageSquare, path: "/wedding/vendor/leads", venueOnly: false },

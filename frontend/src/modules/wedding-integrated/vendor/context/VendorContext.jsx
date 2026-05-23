@@ -57,7 +57,22 @@ export const VendorProvider = ({ children }) => {
   // Persist on every change
   useEffect(() => {
     if (state.status === "draft") {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+      } catch (error) {
+        console.warn("Storage quota exceeded (usually due to large base64 images), saving text fields only to avoid crash.", error);
+        try {
+          // Fallback: save lightweight draft excluding large binary files (portfolio images & kyc docs)
+          const lightState = {
+            ...state,
+            portfolio: [],
+            kyc: { aadhar: null, pan: null, photo: null }
+          };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(lightState));
+        } catch (innerError) {
+          console.error("Failed to persist even lightweight draft", innerError);
+        }
+      }
     }
   }, [state]);
 

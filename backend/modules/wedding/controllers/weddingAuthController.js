@@ -109,13 +109,24 @@ export const loginVendor = async (req, res) => {
 
 export const updatePassword = async (req, res) => {
   try {
-    const { newPassword } = req.body;
-    if (!newPassword) {
-      return res.status(400).json({ message: 'New password is required' });
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current and new passwords are required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect current password' });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await User.findByIdAndUpdate(req.user._id, { password: hashedPassword });
+    user.password = hashedPassword;
+    await user.save();
 
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {

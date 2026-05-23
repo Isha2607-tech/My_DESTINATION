@@ -37,7 +37,7 @@ const Step5KYC = () => {
       setErrors(newErrors);
       return;
     }
-    navigate("/wedding/vendor/onboarding/review");
+    navigate("/wedding/vendor/onboarding/step-5");
   };
 
   const uploadBoxClass = (field) => 
@@ -56,7 +56,7 @@ const Step5KYC = () => {
         </p>
       </section>
 
-      <ProgressBar currentStep={5} />
+      <ProgressBar currentStep={4} />
 
       <div className="max-w-2xl mx-auto px-4 pb-16 md:pb-24">
         <div className="p-5 md:p-8 rounded-2xl bg-card border border-border wedding-shadow animate-wedding-fade-up">
@@ -82,12 +82,16 @@ const Step5KYC = () => {
                   onChange={(e) => handleFileChange('aadhar', e)} 
                 />
                 {kyc.aadhar ? (
-                  <div className="flex flex-col items-center">
-                    <FileCheck className="w-10 h-10 text-emerald-500 mb-3" />
+                  <div className="flex flex-col items-center relative z-10">
+                    {kyc.aadhar.startsWith("data:image/") ? (
+                      <img src={kyc.aadhar} alt="Aadhar Card" className="max-h-24 rounded-lg object-contain border border-[#F3E9E2] shadow-sm mb-2" />
+                    ) : (
+                      <FileCheck className="w-10 h-10 text-emerald-500 mb-3" />
+                    )}
                     <p className="text-xs font-bold text-emerald-600">Aadhar Uploaded</p>
                     <button 
                       onClick={(e) => handleDelete('aadhar', e)}
-                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md border border-border hover:bg-red-50 hover:text-red-500 transition-all"
+                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md border border-border hover:bg-red-50 hover:text-red-500 transition-all z-20"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -155,12 +159,16 @@ const Step5KYC = () => {
                   onChange={(e) => handleFileChange('pan', e)} 
                 />
                 {kyc.pan ? (
-                  <div className="flex flex-col items-center">
-                    <FileCheck className="w-10 h-10 text-emerald-500 mb-3" />
+                  <div className="flex flex-col items-center relative z-10">
+                    {kyc.pan.startsWith("data:image/") ? (
+                      <img src={kyc.pan} alt="PAN Card" className="max-h-24 rounded-lg object-contain border border-[#F3E9E2] shadow-sm mb-2" />
+                    ) : (
+                      <FileCheck className="w-10 h-10 text-emerald-500 mb-3" />
+                    )}
                     <p className="text-xs font-bold text-emerald-600">PAN Card Uploaded</p>
                     <button 
                       onClick={(e) => handleDelete('pan', e)}
-                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md border border-border hover:bg-red-50 hover:text-red-500 transition-all"
+                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md border border-border hover:bg-red-50 hover:text-red-500 transition-all z-20"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -178,7 +186,7 @@ const Step5KYC = () => {
 
           <div className="flex items-center justify-between mt-10">
             <button
-              onClick={() => navigate("/wedding/vendor/onboarding/step-4")}
+              onClick={() => navigate("/wedding/vendor/onboarding/step-3")}
               className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium text-muted-foreground hover:bg-muted transition-all"
             >
               <ChevronLeft className="w-4 h-4" /> Back

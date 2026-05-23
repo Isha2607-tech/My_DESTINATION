@@ -28,6 +28,42 @@ export const getVendorDashboardStats = async (req, res) => {
     const newLeads = await WeddingEnquiry.countDocuments({ targetId: { $in: allTargetIds }, status: 'New' });
     const totalReviews = await WeddingReview.countDocuments({ targetId: { $in: allTargetIds } });
     
+    // Growth Calculation
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
+    // Current Month Stats
+    const currentMonthEnquiries = await WeddingEnquiry.countDocuments({ 
+      targetId: { $in: allTargetIds },
+      createdAt: { $gte: startOfCurrentMonth }
+    });
+    const currentMonthLeads = await WeddingEnquiry.countDocuments({ 
+      targetId: { $in: allTargetIds }, 
+      status: 'New',
+      createdAt: { $gte: startOfCurrentMonth }
+    });
+
+    // Last Month Stats
+    const lastMonthEnquiries = await WeddingEnquiry.countDocuments({ 
+      targetId: { $in: allTargetIds },
+      createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth }
+    });
+    const lastMonthLeads = await WeddingEnquiry.countDocuments({ 
+      targetId: { $in: allTargetIds }, 
+      status: 'New',
+      createdAt: { $gte: startOfLastMonth, $lt: startOfCurrentMonth }
+    });
+
+    const calculateGrowth = (current, last) => {
+      if (last === 0) return current > 0 ? '+100%' : '+0%';
+      const percentage = ((current - last) / last) * 100;
+      return percentage > 0 ? `+${percentage.toFixed(0)}%` : `${percentage.toFixed(0)}%`;
+    };
+
+    const enquiriesGrowth = calculateGrowth(currentMonthEnquiries, lastMonthEnquiries);
+    const leadsGrowth = calculateGrowth(currentMonthLeads, lastMonthLeads);
+
     // Sum views and shortlists from profile and venues
     let totalViews = vendor?.views || 0;
     let totalShortlists = vendor?.shortlistCount || 0;
@@ -36,6 +72,10 @@ export const getVendorDashboardStats = async (req, res) => {
       totalViews += (v.views || 0);
       totalShortlists += (v.shortlistCount || 0);
     });
+
+    // We don't have historical data for views/shortlists in current schema, so setting 0% for now
+    const viewsGrowth = '+0%';
+    const shortlistsGrowth = '+0%';
 
     // 3. Get recent leads (first 5)
     const recentLeads = await WeddingEnquiry.find({ targetId: { $in: allTargetIds } })
@@ -49,7 +89,13 @@ export const getVendorDashboardStats = async (req, res) => {
         newLeads,
         profileViews: totalViews,
         shortlisted: totalShortlists,
-        totalReviews
+        totalReviews,
+        growth: {
+          enquiries: enquiriesGrowth,
+          leads: leadsGrowth,
+          views: viewsGrowth,
+          shortlists: shortlistsGrowth
+        }
       },
       recentLeads
     });
@@ -105,6 +151,22 @@ export const getVendorProfile = async (req, res) => {
       });
     }
 
+    // Fallback logic for premium price (if missing due to older registrations)
+    if (vendor && (!vendor.price || !vendor.price.premium)) {
+      const User = mongoose.model('User');
+      const userDoc = await User.findById(req.user._id);
+      if (userDoc && userDoc.premiumPackage) {
+        // If price object doesn't exist, create it
+        if (!vendor.price) vendor.price = {};
+        
+        vendor.price.premium = userDoc.premiumPackage;
+        // Also save it back to the database for future
+        await WeddingVendor.findByIdAndUpdate(vendor._id, {
+          'price.premium': userDoc.premiumPackage
+        });
+      }
+    }
+
     res.status(200).json({ success: true, vendor });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -128,11 +190,17 @@ export const updateVendorProfile = async (req, res) => {
       experience: basicInfo?.experience || req.body.experience,
       contactPhone: basicInfo?.phone || req.body.contactPhone,
       contactEmail: basicInfo?.email || req.body.contactEmail,
-      portfolio: portfolio || [],
+      portfolio: portfolio || req.body.portfolio || [],
+      albums: req.body.albums || [],
+      videos: req.body.videos || [],
       price: {
-        base: pricing?.basePrice || 0,
+        base: pricing?.basePrice || req.body.price?.base || 0,
+        baseFeatures: pricing?.baseFeatures || req.body.price?.baseFeatures || '',
+        premium: pricing?.premiumPrice || req.body.price?.premium || 0,
+        premiumFeatures: pricing?.premiumFeatures || req.body.price?.premiumFeatures || '',
         type: 'total'
       },
+      services: services || [],
       status: 'pending' // Set status to pending on submission
     };
 
@@ -259,8 +327,12 @@ export const applyAsVendor = async (req, res) => {
       portfolio: portfolio || [],
       price: {
         base: pricing?.basePrice || 0,
+        baseFeatures: pricing?.baseFeatures || '',
+        premium: pricing?.premiumPrice || 0,
+        premiumFeatures: pricing?.premiumFeatures || '',
         type: 'total'
       },
+      services: services?.filter(s => s.name?.trim()) || [],
       status: 'pending'
     };
 

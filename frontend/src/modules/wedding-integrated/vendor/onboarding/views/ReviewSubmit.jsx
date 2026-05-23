@@ -83,7 +83,7 @@ const ReviewSubmit = () => {
         </p>
       </section>
 
-      <ProgressBar currentStep={6} totalSteps={6} />
+      <ProgressBar currentStep={5} totalSteps={5} />
 
       <div className="max-w-2xl mx-auto px-4 pb-16 md:pb-24">
         <div className="p-5 md:p-8 rounded-2xl bg-card border border-border wedding-shadow animate-wedding-fade-up space-y-5">
@@ -117,23 +117,9 @@ const ReviewSubmit = () => {
             </div>
           </SectionCard>
 
-          {/* Portfolio */}
-          <SectionCard icon={Camera} title="Portfolio" editPath="/wedding/vendor/onboarding/step-2">
-            {portfolio.length > 0 ? (
-              <div className="grid grid-cols-4 gap-2">
-                {portfolio.map((src, i) => (
-                  <div key={i} className="aspect-square rounded-xl overflow-hidden border border-border">
-                    <img src={src} alt={`Work ${i + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">No images uploaded</p>
-            )}
-          </SectionCard>
 
           {/* Services */}
-          <SectionCard icon={Briefcase} title="Services" editPath="/wedding/vendor/onboarding/step-3">
+          <SectionCard icon={Briefcase} title="Services" editPath="/wedding/vendor/onboarding/step-2">
             <div className="space-y-2">
               {services.filter(s => s.name.trim()).map((s, i) => (
                 <div key={i} className="p-3 rounded-xl bg-background border border-border">
@@ -150,7 +136,7 @@ const ReviewSubmit = () => {
           </SectionCard>
 
           {/* Pricing */}
-          <SectionCard icon={IndianRupee} title="Pricing" editPath="/wedding/vendor/onboarding/step-4">
+          <SectionCard icon={IndianRupee} title="Pricing" editPath="/wedding/vendor/onboarding/step-3">
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground text-xs">Base Package</p>
@@ -167,22 +153,33 @@ const ReviewSubmit = () => {
           </SectionCard>
 
           {/* KYC */}
-          <SectionCard icon={ShieldCheck} title="KYC Verification" editPath="/wedding/vendor/onboarding/step-5">
+          <SectionCard icon={ShieldCheck} title="KYC Verification" editPath="/wedding/vendor/onboarding/step-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Aadhar Card</p>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-1.5">Aadhar Card</p>
                 {kyc.aadhar ? (
-                  <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold">
-                    <FileCheck className="w-4 h-4" /> Uploaded
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold">
+                      <FileCheck className="w-4 h-4" /> Uploaded
+                    </div>
+                    {kyc.aadhar.startsWith("data:image/") ? (
+                      <div className="w-20 h-14 rounded-xl overflow-hidden border border-[#F3E9E2] shadow-sm bg-muted">
+                        <img src={kyc.aadhar} alt="Aadhar Card" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-14 rounded-xl bg-muted border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                        PDF Document
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-destructive text-xs font-bold">Not Uploaded</p>
                 )}
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Vendor Photo</p>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-1.5">Vendor Photo</p>
                 {kyc.photo ? (
-                  <div className="w-12 h-12 rounded-full overflow-hidden border border-[#F3E9E2] shadow-sm">
+                  <div className="w-14 h-14 rounded-full overflow-hidden border border-[#F3E9E2] shadow-sm bg-muted">
                     <img src={kyc.photo} alt="KYC Vendor" className="w-full h-full object-cover" />
                   </div>
                 ) : (
@@ -190,10 +187,21 @@ const ReviewSubmit = () => {
                 )}
               </div>
               <div className="space-y-1">
-                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">PAN Card</p>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-1.5">PAN Card</p>
                 {kyc.pan ? (
-                  <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold">
-                    <FileCheck className="w-4 h-4" /> Uploaded
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-600 text-xs font-bold">
+                      <FileCheck className="w-4 h-4" /> Uploaded
+                    </div>
+                    {kyc.pan.startsWith("data:image/") ? (
+                      <div className="w-20 h-14 rounded-xl overflow-hidden border border-[#F3E9E2] shadow-sm bg-muted">
+                        <img src={kyc.pan} alt="PAN Card" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-14 rounded-xl bg-muted border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                        PDF Document
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-xs font-medium italic">Optional / Not Uploaded</p>
@@ -205,7 +213,7 @@ const ReviewSubmit = () => {
           {/* Submit */}
           <div className="flex justify-between mt-8 pt-4 border-t border-border">
             <button
-              onClick={() => navigate("/wedding/vendor/onboarding/step-5")}
+              onClick={() => navigate("/wedding/vendor/onboarding/step-4")}
               className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-muted text-muted-foreground transition-all duration-300 hover:bg-primary/10"
             >
               <ChevronLeft className="w-4 h-4" /> Back

@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
 // Assets from the wedding module
@@ -45,20 +45,29 @@ const WelcomePage = () => {
   const [searchParams] = useSearchParams();
   const type = searchParams.get('type');
 
-  const [selectedIndex, setSelectedIndex] = useState(() => {
-    if (type === 'wedding') return 1;
-    return 0;
-  });
+  // Direct navigation based on type param — skip carousel entirely
+  useEffect(() => {
+    if (type === 'hotel') {
+      navigate('/home', { replace: true });
+    } else if (type === 'tour') {
+      navigate('/taxi/user', { replace: true });
+    } else if (type === 'wedding') {
+      navigate('/wedding', { replace: true });
+    }
+  }, [type, navigate]);
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
-  // Auto-advance carousel
+  // Auto-advance carousel (only runs when no type redirect)
   useEffect(() => {
+    if (type) return; // Don't auto-scroll if redirecting
     const timer = setInterval(() => {
       setSelectedIndex((prev) => (prev + 1) % slides.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [type]);
 
   const scrollTo = useCallback((index) => {
     setSelectedIndex(index);

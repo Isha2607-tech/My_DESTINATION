@@ -44,7 +44,7 @@ const steps = [
   {
     icon: Heart,
     title: "Celebrate",
-    desc: "Let us handle the rest â€” you just enjoy",
+    desc: "Let us handle the rest - you just enjoy",
     image: "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1000&auto=format&fit=crop",
   },
 ];
@@ -74,6 +74,7 @@ const whyUs = [
 
 const WeddingHomePage = () => {
   const [allDestinations, setAllDestinations] = useState([]);
+  const [realWeddings, setRealWeddings] = useState([]);
   const [topPlanners, setTopPlanners] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPlannersLoading, setIsPlannersLoading] = useState(true);
@@ -91,6 +92,15 @@ const WeddingHomePage = () => {
       }
     };
 
+    const fetchRealWeddings = async () => {
+      try {
+        const data = await weddingService.getRealWeddings();
+        setRealWeddings(data || []);
+      } catch (error) {
+        console.error("Failed to fetch real weddings:", error);
+      }
+    };
+
     const fetchPlanners = async () => {
       try {
         setIsPlannersLoading(true);
@@ -104,6 +114,7 @@ const WeddingHomePage = () => {
     };
 
     fetchDestinations();
+    fetchRealWeddings();
     fetchPlanners();
   }, []);
   return (
@@ -276,21 +287,15 @@ const WeddingHomePage = () => {
           </ScrollReveal>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
-            {allDestinations.slice(0, 6).map((dest, i) => (
-              <ScrollReveal key={dest._id || dest.id} delay={i * 80}>
+            {realWeddings.slice(0, 6).map((wedding, i) => (
+              <ScrollReveal key={wedding._id || wedding.id} delay={i * 80}>
                 <Link
-                  to={`/wedding/real-weddings/by-location/${dest._id || dest.id}`}
+                  to={`/wedding/real-weddings/gallery/${wedding._id || wedding.id}`}
                   className="group relative block aspect-[3/2] rounded-[1.25rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
                 >
                   <img
-                    src={dest.image || {
-                      Udaipur: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=600&auto=format&fit=crop",
-                      Goa: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
-                      Jaipur: "https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=600&auto=format&fit=crop",
-                      Shimla: "https://images.unsplash.com/photo-1597075687490-8f673c6c17f6?q=80&w=600&auto=format&fit=crop",
-                      Kerala: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?q=80&w=600&auto=format&fit=crop"
-                    }[dest.name.trim()] || "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop"}
-                    alt={`${dest.name} Weddings`}
+                    src={wedding.coverImage || "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=600&auto=format&fit=crop"}
+                    alt={wedding.coupleName}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   {/* Overlay Gradient - Hidden by default, shown on hover */}
@@ -298,14 +303,22 @@ const WeddingHomePage = () => {
                   
                   {/* Text - Hidden by default, shown on hover */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                    <span className="px-3 py-1 bg-primary text-white rounded-full text-[9px] font-bold uppercase tracking-widest leading-none mb-2 inline-block">
+                      {wedding.locationName || wedding.destination?.name || "Destination Wedding"}
+                    </span>
                     <h3 className="text-lg sm:text-xl font-bold text-white mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      {dest.name} Wedding
+                      {wedding.coupleName}
                     </h3>
-                    <div className="h-0.5 w-8 bg-primary" />
+                    <div className="h-0.5 w-8 bg-primary mt-1" />
                   </div>
                 </Link>
               </ScrollReveal>
             ))}
+            {realWeddings.length === 0 && (
+              <div className="col-span-full py-16 text-center bg-white/60 backdrop-blur-md rounded-[1.25rem] border border-pink-100/50">
+                <p className="text-slate-400 text-sm italic font-serif">No real wedding stories uploaded yet by the admin.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

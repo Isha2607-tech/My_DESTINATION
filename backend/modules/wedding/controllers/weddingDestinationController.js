@@ -1,6 +1,6 @@
 import WeddingDestination from '../models/WeddingDestination.js';
 import WeddingCategory from '../models/WeddingCategory.js';
-import { uploadToCloudinary } from '../../../utils/cloudinary.js';
+import { uploadToCloudinary, uploadBase64ToCloudinary } from '../../../utils/cloudinary.js';
 
 export const getDestinations = async (req, res) => {
   try {
@@ -47,8 +47,8 @@ export const addDestination = async (req, res) => {
     let imageUrl = image;
     if (image && image.startsWith('data:image')) {
       try {
-        const uploadResponse = await uploadToCloudinary(image, 'wedding/destinations');
-        imageUrl = uploadResponse.secure_url;
+        const uploadResponse = await uploadBase64ToCloudinary(image, 'wedding/destinations');
+        imageUrl = uploadResponse.url;
       } catch (uploadError) {
         console.warn('Cloudinary upload failed, falling back to saving base64 string directly.', uploadError.message);
         imageUrl = image; // Fallback to storing the base64 string directly
@@ -82,8 +82,8 @@ export const updateDestination = async (req, res) => {
 
     if (updates.image && updates.image.startsWith('data:image')) {
       try {
-        const uploadResponse = await uploadToCloudinary(updates.image, 'wedding/destinations');
-        updates.image = uploadResponse.secure_url;
+        const uploadResponse = await uploadBase64ToCloudinary(updates.image, 'wedding/destinations');
+        updates.image = uploadResponse.url;
       } catch (uploadError) {
         console.warn('Cloudinary upload failed, falling back to base64.', uploadError.message);
         // Leave updates.image as the base64 string
@@ -124,8 +124,8 @@ export const addCategory = async (req, res) => {
     let imageUrl = image;
     if (image && image.startsWith('data:image')) {
       try {
-        const uploadResponse = await uploadToCloudinary(image, 'wedding/categories');
-        imageUrl = uploadResponse.secure_url;
+        const uploadResponse = await uploadBase64ToCloudinary(image, 'wedding/categories');
+        imageUrl = uploadResponse.url;
       } catch (uploadError) {
         console.warn('Cloudinary upload failed for category image, using fallback.', uploadError.message);
         imageUrl = image;
@@ -148,8 +148,8 @@ export const updateCategory = async (req, res) => {
 
     if (updates.image && updates.image.startsWith('data:image')) {
       try {
-        const uploadResponse = await uploadToCloudinary(updates.image, 'wedding/categories');
-        updates.image = uploadResponse.secure_url;
+        const uploadResponse = await uploadBase64ToCloudinary(updates.image, 'wedding/categories');
+        updates.image = uploadResponse.url;
       } catch (uploadError) {
         console.warn('Cloudinary upload failed for category image update, using fallback.', uploadError.message);
       }

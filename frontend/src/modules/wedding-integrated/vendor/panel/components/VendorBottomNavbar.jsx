@@ -15,7 +15,6 @@ import { useAuth } from "../../context/AuthContext";
 const allNavItems = [
   { id: "dashboard", label: "Home", icon: LayoutDashboard, path: "/wedding/vendor/dashboard", venueOnly: false },
   { id: "leads", label: "Leads", icon: MessageSquare, path: "/wedding/vendor/leads", venueOnly: false },
-  { id: "work", label: "Work", icon: ImageIcon, path: "/wedding/vendor/work", venueOnly: false },
   { id: "add-venue", label: "Add Venue", icon: PlusCircle, path: "/wedding/vendor/venues/add", venueOnly: true },
   { id: "my-venues", label: "My Venues", icon: Building2, path: "/wedding/vendor/venues/my", venueOnly: true },
   { id: "reviews", label: "Love", icon: Star, path: "/wedding/vendor/reviews", venueOnly: false },

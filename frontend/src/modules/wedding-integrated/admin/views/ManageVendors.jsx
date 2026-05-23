@@ -20,8 +20,14 @@ import {
 const ManageVendors = () => {
   const location = useLocation();
   const [vendors, setVendors] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVendor, setSelectedVendor] = useState(null);
+
+  // Filters State
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -30,10 +36,14 @@ const ManageVendors = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await weddingService.getAdminVendors();
-      setVendors(data);
+      const [vendorData, categoryData] = await Promise.all([
+        weddingService.getAdminVendors(),
+        weddingService.getCategories()
+      ]);
+      setVendors(vendorData || []);
+      setCategories(categoryData?.categories || categoryData || []);
     } catch (error) {
-      console.error('Error fetching vendors:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -54,6 +64,38 @@ const ManageVendors = () => {
     }
   };
 
+  // Export to CSV Handler
+  const handleExport = () => {
+    if (filteredVendors.length === 0) {
+      alert("No data to export!");
+      return;
+    }
+    const headers = ["Name", "Email", "Phone", "Category", "Location", "Experience (Years)", "Base Package", "Premium Package", "Status"];
+    const rows = filteredVendors.map(v => [
+      v.name || '',
+      v.email || '',
+      v.phone || '',
+      v.category || '',
+      v.location || '',
+      v.experience || '0',
+      v.basicPackage || '0',
+      v.premiumPackage || '0',
+      v.partnerApprovalStatus || 'pending'
+    ]);
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `vendors_export_${isPendingView ? 'pending' : 'all'}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedVendor) {
@@ -68,10 +110,24 @@ const ManageVendors = () => {
 
   const isPendingView = location.pathname.includes('/pending');
   
+  // Dynamic filtered list based on view + category + location filters
   const filteredVendors = vendors.filter(v => {
-    if (isPendingView) return v.partnerApprovalStatus === 'pending';
-    return v.partnerApprovalStatus === 'approved' || v.partnerApprovalStatus === 'rejected';
+    const matchesView = isPendingView 
+      ? v.partnerApprovalStatus === 'pending'
+      : (v.partnerApprovalStatus === 'approved' || v.partnerApprovalStatus === 'rejected');
+    
+    const matchesCategory = !selectedCategory || v.category === selectedCategory;
+    const matchesLocation = !selectedLocation || v.location === selectedLocation;
+
+    return matchesView && matchesCategory && matchesLocation;
   });
+
+  // Dynamic filter lists
+  const uniqueCategories = categories.length > 0
+    ? Array.from(new Set(categories.map(cat => cat.name).filter(Boolean)))
+    : Array.from(new Set(vendors.map(v => v.category).filter(Boolean)));
+
+  const uniqueLocations = Array.from(new Set(vendors.map(v => v.location).filter(Boolean)));
 
   if (loading && vendors.length === 0) {
     return (
@@ -96,15 +152,78 @@ const ManageVendors = () => {
                   : `Manage and oversee all ${filteredVendors.length} registered vendors on the platform`}
               </p>
             </div>
-            <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 border border-[#B06A6C]/20 bg-white rounded-xl text-sm font-medium hover:bg-white shadow-sm transition-all">
-                <Filter size={16} /> Filter
+             <div className="flex gap-3">
+              <button
+                onClick={() => setShowFilters(prev => !prev)}
+                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm transition-all ${
+                  showFilters
+                    ? 'bg-[#B06A6C] text-white border-[#B06A6C]'
+                    : 'border-[#B06A6C]/20 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <Filter size={16} /> Filter{(selectedCategory || selectedLocation) && ' (Active)'}
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 border border-[#B06A6C]/20 bg-white rounded-xl text-sm font-medium hover:bg-white shadow-sm transition-all">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-4 py-2 border border-[#B06A6C]/20 bg-white rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm transition-all"
+              >
                 <Download size={16} /> Export
               </button>
             </div>
           </div>
+
+          {/* Interactive Dynamic Filter Pane */}
+          {showFilters && (
+            <div className="p-6 bg-white border border-[#F3E9E2] rounded-3xl animate-in slide-in-from-top-4 duration-300 grid grid-cols-1 md:grid-cols-3 gap-4 shadow-md">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#B06A6C]"
+                >
+                  <option value="">All Categories</option>
+                  {uniqueCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Location</label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#B06A6C]"
+                >
+                  <option value="">All Locations</option>
+                  {uniqueLocations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end gap-3 justify-end">
+                {(selectedCategory || selectedLocation) && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('');
+                      setSelectedLocation('');
+                    }}
+                    className="px-4 py-2.5 text-xs font-black text-rose-500 uppercase hover:text-rose-600 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-700 uppercase tracking-widest transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -231,10 +350,19 @@ const ManageVendors = () => {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pricing</p>
-                  <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
-                    <IndianRupee className="w-4 h-4" /> {selectedVendor.basicPackage ? `From ₹${selectedVendor.basicPackage}` : 'On Request'}
-                  </p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pricing Packages</p>
+                  <div className="flex flex-col gap-1 text-slate-800">
+                    <p className="text-sm font-bold flex items-center gap-1">
+                      <span className="text-slate-400 font-semibold text-xs w-16">Base:</span>
+                      <span className="text-emerald-600 flex items-center gap-1 font-extrabold"><IndianRupee className="w-3.5 h-3.5" />{selectedVendor.basicPackage ? selectedVendor.basicPackage.toLocaleString('en-IN') : 'On Request'}</span>
+                    </p>
+                    {selectedVendor.premiumPackage && (
+                      <p className="text-sm font-bold flex items-center gap-1">
+                        <span className="text-slate-400 font-semibold text-xs w-16">Premium:</span>
+                        <span className="text-emerald-700 flex items-center gap-1 font-extrabold"><IndianRupee className="w-3.5 h-3.5" />{selectedVendor.premiumPackage.toLocaleString('en-IN')}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Information</p>
@@ -260,6 +388,73 @@ const ManageVendors = () => {
                         {service.name} {service.price ? `(₹${service.price})` : ''}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* KYC Verification Documents */}
+              {(selectedVendor.aadhaarFront || selectedVendor.panCardImage || selectedVendor.profileImage) && (
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-[#B06A6C]" /> Verification Documents (KYC)
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Aadhar Card */}
+                    {selectedVendor.aadhaarFront && (
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Aadhar Card</span>
+                        {selectedVendor.aadhaarFront.startsWith('data:image/') || selectedVendor.aadhaarFront.startsWith('http') ? (
+                          <div className="w-full h-24 rounded-xl overflow-hidden border border-slate-200 bg-white relative group cursor-pointer" onClick={() => window.open(selectedVendor.aadhaarFront, '_blank')}>
+                            <img src={selectedVendor.aadhaarFront} alt="Aadhar Card" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                              <Eye className="w-4 h-4" /> View Full
+                            </div>
+                          </div>
+                        ) : (
+                          <a href={selectedVendor.aadhaarFront} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-[#B06A6C] hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+                            <Download className="w-3.5 h-3.5" /> Download File
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* PAN Card */}
+                    {selectedVendor.panCardImage && (
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">PAN Card</span>
+                        {selectedVendor.panCardImage.startsWith('data:image/') || selectedVendor.panCardImage.startsWith('http') ? (
+                          <div className="w-full h-24 rounded-xl overflow-hidden border border-slate-200 bg-white relative group cursor-pointer" onClick={() => window.open(selectedVendor.panCardImage, '_blank')}>
+                            <img src={selectedVendor.panCardImage} alt="PAN Card" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                              <Eye className="w-4 h-4" /> View Full
+                            </div>
+                          </div>
+                        ) : (
+                          <a href={selectedVendor.panCardImage} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-[#B06A6C] hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+                            <Download className="w-3.5 h-3.5" /> Download File
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Vendor Photo */}
+                    {selectedVendor.profileImage && (
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Vendor Photo</span>
+                        {selectedVendor.profileImage.startsWith('data:image/') || selectedVendor.profileImage.startsWith('http') ? (
+                          <div className="w-full h-24 rounded-xl overflow-hidden border border-slate-200 bg-white relative group cursor-pointer" onClick={() => window.open(selectedVendor.profileImage, '_blank')}>
+                            <img src={selectedVendor.profileImage} alt="Vendor Photo" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                              <Eye className="w-4 h-4" /> View Full
+                            </div>
+                          </div>
+                        ) : (
+                          <a href={selectedVendor.profileImage} target="_blank" rel="noreferrer" className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-[#B06A6C] hover:bg-slate-50 transition-colors flex items-center gap-1.5">
+                            <Download className="w-3.5 h-3.5" /> Download File
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

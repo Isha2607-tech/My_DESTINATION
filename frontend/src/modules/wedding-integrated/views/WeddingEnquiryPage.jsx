@@ -154,34 +154,33 @@ const WeddingEnquiryPage = () => {
                   <label className="block text-xs font-medium mb-1">
                     Expected Guest Count
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    inputMode="numeric"
                     value={form.guestCount}
-                    onChange={(e) => update("guestCount", e.target.value)}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (form.guestCount.endsWith('+') && val === form.guestCount.slice(0, -1)) {
+                        val = val.slice(0, -1);
+                      }
+                      val = val.replace(/\\D/g, '');
+                      update("guestCount", val ? val + "+" : "");
+                    }}
+                    placeholder="e.g. 500"
                     className="w-full px-4 py-2 md:py-3 rounded-xl bg-muted border border-border text-foreground text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Select</option>
-                    <option>Under 100</option>
-                    <option>100 – 300</option>
-                    <option>300 – 500</option>
-                    <option>500+</option>
-                  </select>
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1">
                     Preferred Destination
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={form.destination}
                     onChange={(e) => update("destination", e.target.value)}
+                    placeholder="e.g. Jaipur, Goa, Udaipur"
                     className="w-full px-4 py-2 md:py-3 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Select</option>
-                    {destinations.map((d) => (
-                      <option key={d._id || d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
             )}
@@ -190,19 +189,20 @@ const WeddingEnquiryPage = () => {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Budget Range
+                    Budget
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={form.budgetRange}
-                    onChange={(e) => update("budgetRange", e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || /^[0-9]+[ \t]*[lLkK]?[ \t]*(-[ \t]*([0-9]+[ \t]*[lLkK]?)?)?$/.test(val)) {
+                        update("budgetRange", val);
+                      }
+                    }}
+                    placeholder="e.g. 5L or 50K - 1L"
                     className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Select</option>
-                    <option>₹5L – ₹15L</option>
-                    <option>₹15L – ₹40L</option>
-                    <option>₹40L – ₹1Cr</option>
-                    <option>₹1Cr+</option>
-                  </select>
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-3">
@@ -240,7 +240,12 @@ const WeddingEnquiryPage = () => {
                   <input
                     type="text"
                     value={form.name}
-                    onChange={(e) => update("name", e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^[a-zA-Z\s]*$/.test(val)) {
+                        update("name", val);
+                      }
+                    }}
                     placeholder="Full name"
                     className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
@@ -253,9 +258,16 @@ const WeddingEnquiryPage = () => {
                     type="email"
                     value={form.email}
                     onChange={(e) => update("email", e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    placeholder="e.g. example@gmail.com"
+                    className={`w-full px-4 py-3 rounded-xl bg-muted border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
+                      form.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$/.test(form.email)
+                        ? "border-red-500 focus:ring-red-500/50"
+                        : "border-border"
+                    }`}
                   />
+                  {form.email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$/.test(form.email) && (
+                    <p className="text-xs text-red-500 mt-1">Please enter a valid standard email (e.g. @gmail.com, @yahoo.com)</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -264,10 +276,20 @@ const WeddingEnquiryPage = () => {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => update("phone", e.target.value)}
-                    placeholder="+91 98765 43210"
-                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                      update("phone", val);
+                    }}
+                    placeholder="e.g. 9876543210"
+                    className={`w-full px-4 py-3 rounded-xl bg-muted border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
+                      form.phone && form.phone.length !== 10
+                        ? "border-red-500 focus:ring-red-500/50"
+                        : "border-border"
+                    }`}
                   />
+                  {form.phone && form.phone.length !== 10 && (
+                    <p className="text-xs text-red-500 mt-1">Phone number must be exactly 10 digits.</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">

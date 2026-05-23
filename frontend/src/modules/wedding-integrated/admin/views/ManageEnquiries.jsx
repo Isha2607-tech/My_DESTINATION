@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { adminStyles } from '../theme/themeConfig';
-import { Filter, Search, ArrowUpRight, CheckCircle2, Circle, Trash2 } from 'lucide-react';
+import { Filter, Search, ArrowUpRight, CheckCircle2, Circle, Trash2, Eye, X } from 'lucide-react';
 import { weddingService } from '../../../../services/weddingService';
 
 const ManageEnquiries = () => {
@@ -8,6 +8,7 @@ const ManageEnquiries = () => {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
   useEffect(() => {
     fetchEnquiries();
@@ -157,8 +158,16 @@ const ManageEnquiries = () => {
                     <td className="py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
+                          onClick={() => setSelectedEnquiry(enq)}
+                          className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all duration-300"
+                          title="View Details"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button 
                           onClick={() => handleDelete(enq._id)}
                           className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all duration-300"
+                          title="Delete Enquiry"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -180,6 +189,80 @@ const ManageEnquiries = () => {
           </table>
         </div>
       </div>
+
+      {/* View Enquiry Modal */}
+      {selectedEnquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50">
+              <h3 className="text-xl font-serif font-bold text-[hsl(353,45%,35%)]">Enquiry Details</h3>
+              <button 
+                onClick={() => setSelectedEnquiry(null)}
+                className="p-2 bg-white rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Client Name</p>
+                  <p className="text-gray-800 font-medium">{selectedEnquiry.name}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Contact Info</p>
+                  <p className="text-gray-800 font-medium">{selectedEnquiry.phone}</p>
+                  <p className="text-gray-500 text-sm">{selectedEnquiry.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Event Date</p>
+                  <p className="text-gray-800 font-medium">{selectedEnquiry.weddingDate ? new Date(selectedEnquiry.weddingDate).toLocaleDateString() : 'Not Specified'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Guest Count</p>
+                  <p className="text-gray-800 font-medium">{selectedEnquiry.guestCount || 'Not Specified'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Budget</p>
+                  <p className="text-[hsl(353,45%,35%)] font-bold">{selectedEnquiry.budget || 'Not Specified'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Destination</p>
+                  <p className="text-gray-800 font-medium">{selectedEnquiry.destination || 'Not Specified'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-2">Services Needed</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEnquiry.services && selectedEnquiry.services.length > 0 ? (
+                      selectedEnquiry.services.map((service, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-[hsl(353,45%,35%)]/10 text-[hsl(353,45%,35%)] text-xs font-bold rounded-full">
+                          {service}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-sm">None specified</span>
+                    )}
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Additional Notes / Message</p>
+                  <div className="p-4 bg-gray-50 rounded-2xl text-gray-700 text-sm whitespace-pre-wrap border border-gray-100">
+                    {selectedEnquiry.message || 'No additional notes provided.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button 
+                onClick={() => setSelectedEnquiry(null)}
+                className="px-6 py-2 bg-[hsl(353,45%,35%)] text-white font-bold rounded-xl hover:bg-[hsl(353,45%,25%)] transition-colors shadow-lg shadow-[hsl(353,45%,35%)]/20"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

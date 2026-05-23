@@ -43,6 +43,7 @@ const VendorSettings = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -94,14 +95,19 @@ const VendorSettings = () => {
   };
 
   const handleUpdatePassword = async () => {
+    if (!currentPassword) {
+      toast.error("Please enter your current password");
+      return;
+    }
     if (!newPassword || newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error("New password must be at least 6 characters");
       return;
     }
     try {
       setSaving(true);
-      await weddingVendorService.updatePassword(newPassword);
+      await weddingVendorService.updatePassword(currentPassword, newPassword);
       toast.success("Password updated successfully!");
+      setCurrentPassword("");
       setNewPassword("");
     } catch (error) {
       toast.error(error.message || "Failed to update password");
@@ -179,7 +185,7 @@ const VendorSettings = () => {
                   Change Photo
                </button>
                <button 
-                 onClick={() => navigate('/wedding/vendor/work')}
+                 onClick={() => navigate('/wedding/vendor/profile')}
                  className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all shadow-xl"
                >
                   Edit Portfolio
@@ -198,10 +204,9 @@ const VendorSettings = () => {
                  </div>
                  <h4 className="text-base md:text-lg font-black text-[#4A3730] " >Notifications</h4>
               </div>
-              <div className="p-5 md:p-8 space-y-4 md:space-y-6">
+               <div className="p-5 md:p-8 space-y-4 md:space-y-6">
                  {[
                    { id: 'leads', title: "New Lead Alerts", desc: "Receive real-time push notifications for user enquiries.", icon: MessageSquare },
-                   { id: 'whatsapp', title: "WhatsApp Updates", desc: "Get notification links on your business WhatsApp.", icon: Globe },
                  ].map((item, i) => (
                    <div key={i} className="flex items-center justify-between group">
                       <div className="flex items-center gap-5">
@@ -233,22 +238,34 @@ const VendorSettings = () => {
                   <h4 className="text-base md:text-lg font-black text-[#4A3730] " >Security</h4>
                </div>
                <div className="p-5 md:p-8 space-y-4 md:space-y-6">
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black text-[#8E7E77] uppercase tracking-widest ml-1">Update Password</label>
-                     <div className="relative group">
+                  <div className="space-y-4">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-[#8E7E77] uppercase tracking-widest ml-1">Current Password</label>
                         <input 
-                           type={showPassword ? "text" : "password"} 
-                           placeholder="Enter new secure password"
+                           type="password" 
+                           placeholder="Enter current password"
                            className="w-full bg-[#F3E9E2]/30 border border-[#F3E9E2] rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-[#B06A6C] transition-all"
-                           value={newPassword}
-                           onChange={(e) => setNewPassword(e.target.value)}
+                           value={currentPassword}
+                           onChange={(e) => setCurrentPassword(e.target.value)}
                         />
-                        <button 
-                           onClick={() => setShowPassword(!showPassword)}
-                           className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors p-1"
-                        >
-                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-[#8E7E77] uppercase tracking-widest ml-1">New Password</label>
+                        <div className="relative group">
+                           <input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="Enter new secure password"
+                              className="w-full bg-[#F3E9E2]/30 border border-[#F3E9E2] rounded-2xl px-5 py-4 text-sm font-bold text-slate-800 outline-none focus:border-[#B06A6C] transition-all"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                           />
+                           <button 
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#B06A6C] transition-colors p-1"
+                           >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                           </button>
+                        </div>
                      </div>
                   </div>
 

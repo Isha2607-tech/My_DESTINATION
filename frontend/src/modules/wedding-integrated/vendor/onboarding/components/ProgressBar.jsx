@@ -1,8 +1,8 @@
 import { Check } from "lucide-react";
 
-const stepLabels = ["Basic Info", "Portfolio", "Services", "Pricing", "KYC", "Review"];
+const stepLabels = ["Basic Info", "Services", "Pricing", "KYC", "Review"];
 
-const ProgressBar = ({ currentStep = 1, totalSteps = 6 }) => {
+const ProgressBar = ({ currentStep = 1, totalSteps = 5 }) => {
   return (
     <div className="w-full max-w-2xl mx-auto px-4 mb-8 md:mb-12">
       <div className="flex items-center">

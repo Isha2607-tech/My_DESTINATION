@@ -135,7 +135,10 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="py-6 text-right">
-                      <button className="p-3 bg-[hsl(353,45%,35%)]/5 hover:bg-[hsl(353,45%,35%)] hover:text-white text-[hsl(353,45%,35%)] rounded-2xl shadow-sm transition-all duration-300 transform group-hover:scale-105">
+                      <button 
+                        onClick={() => navigate('/wedding/admin/enquiries')}
+                        className="p-3 bg-[hsl(353,45%,35%)]/5 hover:bg-[hsl(353,45%,35%)] hover:text-white text-[hsl(353,45%,35%)] rounded-2xl shadow-sm transition-all duration-300 transform group-hover:scale-105"
+                      >
                         <ArrowUpRight size={20} />
                       </button>
                     </td>

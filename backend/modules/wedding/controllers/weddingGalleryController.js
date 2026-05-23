@@ -1,6 +1,6 @@
 import WeddingRealWedding from '../models/WeddingRealWedding.js';
 import WeddingGallery from '../models/WeddingGallery.js';
-import { uploadToCloudinary } from '../../../utils/cloudinary.js';
+import { uploadToCloudinary, uploadBase64ToCloudinary } from '../../../utils/cloudinary.js';
 
 export const getGallery = async (req, res) => {
   try {
@@ -17,8 +17,8 @@ export const addGalleryImage = async (req, res) => {
     
     let imageUrl = '';
     if (image && image.startsWith('data:image')) {
-      const uploadResponse = await uploadToCloudinary(image, 'wedding/gallery');
-      imageUrl = uploadResponse.secure_url;
+      const uploadResponse = await uploadBase64ToCloudinary(image, 'wedding/gallery');
+      imageUrl = uploadResponse.url;
     }
 
     const newImage = await WeddingGallery.create({
@@ -46,7 +46,7 @@ export const deleteGalleryImage = async (req, res) => {
 // Real Weddings
 export const getRealWeddings = async (req, res) => {
   try {
-    const weddings = await WeddingRealWedding.find().sort({ createdAt: -1 });
+    const weddings = await WeddingRealWedding.find().populate('destination').sort({ createdAt: -1 });
     res.status(200).json(weddings);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -55,33 +55,46 @@ export const getRealWeddings = async (req, res) => {
 
 export const addRealWedding = async (req, res) => {
   try {
-    const { coupleName, date, location, story, coverImage, gallery } = req.body;
+    const { 
+      coupleName, 
+      destinationId, 
+      locationName, 
+      guests, 
+      budgetMin, 
+      budgetMax, 
+      coverImage, 
+      photos 
+    } = req.body;
     
     let coverImageUrl = '';
     if (coverImage && coverImage.startsWith('data:image')) {
-      const uploadResponse = await uploadToCloudinary(coverImage, 'wedding/real-weddings');
-      coverImageUrl = uploadResponse.secure_url;
+      const uploadResponse = await uploadBase64ToCloudinary(coverImage, 'wedding/real-weddings');
+      coverImageUrl = uploadResponse.url;
+    } else {
+      coverImageUrl = coverImage;
     }
 
-    const uploadedGallery = [];
-    if (gallery && Array.isArray(gallery)) {
-      for (const img of gallery) {
-        if (img.startsWith('data:image')) {
-          const uploadRes = await uploadToCloudinary(img, 'wedding/real-weddings/gallery');
-          uploadedGallery.push(uploadRes.secure_url);
+    const uploadedPhotos = [];
+    if (photos && Array.isArray(photos)) {
+      for (const img of photos) {
+        if (img && img.startsWith('data:image')) {
+          const uploadRes = await uploadBase64ToCloudinary(img, 'wedding/real-weddings/gallery');
+          uploadedPhotos.push(uploadRes.url);
         } else {
-          uploadedGallery.push(img);
+          uploadedPhotos.push(img);
         }
       }
     }
 
     const newWedding = await WeddingRealWedding.create({
       coupleName,
-      date,
-      location,
-      story,
+      destination: destinationId || undefined,
+      locationName,
+      guests: guests ? Number(guests) : undefined,
+      budgetMin,
+      budgetMax,
       coverImage: coverImageUrl,
-      gallery: uploadedGallery
+      photos: uploadedPhotos
     });
 
     res.status(201).json(newWedding);

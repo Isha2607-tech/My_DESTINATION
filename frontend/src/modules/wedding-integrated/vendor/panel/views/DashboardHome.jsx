@@ -28,7 +28,13 @@ const DashboardHome = () => {
       totalEnquiries: 0,
       newLeads: 0,
       profileViews: 0,
-      shortlisted: 0
+      shortlisted: 0,
+      growth: {
+        enquiries: "+0%",
+        leads: "+0%",
+        views: "+0%",
+        shortlists: "+0%"
+      }
     },
     recentLeads: []
   });
@@ -54,10 +60,10 @@ const DashboardHome = () => {
   }, []);
 
   const statsConfig = [
-    { label: "Total Enquiries", value: data.stats.totalEnquiries, icon: MessageCircle, growth: "+12%", color: "bg-blue-50 text-blue-500 shadow-blue-500/10", path: "/wedding/vendor/leads" },
-    { label: "New Leads", value: data.stats.newLeads, icon: Users, growth: "+5%", color: "bg-emerald-50 text-emerald-500 shadow-emerald-500/10", path: "/wedding/vendor/leads" },
-    { label: "Profile Views", value: data.stats.profileViews >= 1000 ? `${(data.stats.profileViews / 1000).toFixed(1)}K` : data.stats.profileViews, icon: Eye, growth: "+18%", color: "bg-amber-50 text-amber-500 shadow-amber-500/10", path: "/wedding/vendor/profile" },
-    { label: "Shortlisted", value: data.stats.shortlisted, icon: Heart, growth: "+7%", color: "bg-[#B06A6C]/10 text-[#B06A6C] shadow-[#B06A6C]/10", path: "/wedding/vendor/reviews" },
+    { label: "Total Enquiries", value: data.stats.totalEnquiries, icon: MessageCircle, growth: data.stats.growth?.enquiries || "+0%", color: "bg-blue-50 text-blue-500 shadow-blue-500/10", path: "/wedding/vendor/leads" },
+    { label: "New Leads", value: data.stats.newLeads, icon: Users, growth: data.stats.growth?.leads || "+0%", color: "bg-emerald-50 text-emerald-500 shadow-emerald-500/10", path: "/wedding/vendor/leads" },
+    { label: "Profile Views", value: data.stats.profileViews >= 1000 ? `${(data.stats.profileViews / 1000).toFixed(1)}K` : data.stats.profileViews, icon: Eye, growth: data.stats.growth?.views || "+0%", color: "bg-amber-50 text-amber-500 shadow-amber-500/10", path: "/wedding/vendor/profile" },
+    { label: "Shortlisted", value: data.stats.shortlisted, icon: Heart, growth: data.stats.growth?.shortlists || "+0%", color: "bg-[#B06A6C]/10 text-[#B06A6C] shadow-[#B06A6C]/10", path: "/wedding/vendor/reviews" },
   ];
 
   if (loading) {

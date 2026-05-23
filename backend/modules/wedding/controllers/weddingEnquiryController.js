@@ -76,9 +76,6 @@ export const createEnquiry = async (req, res) => {
 };
 
 
-/**
- * @desc    Get enquiries for current user
- */
 export const getMyEnquiries = async (req, res) => {
   try {
     const enquiries = await WeddingEnquiry.find({ 
@@ -86,7 +83,19 @@ export const getMyEnquiries = async (req, res) => {
         { user: req.user._id },
         { email: req.user.email }
       ]
-    }).sort({ createdAt: -1 });
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+    for (let enquiry of enquiries) {
+      if (enquiry.targetType === 'Venue' && enquiry.targetId) {
+        enquiry.targetId = await WeddingVenue.findById(enquiry.targetId).lean() || enquiry.targetId;
+      } else if (enquiry.targetType === 'Vendor' && enquiry.targetId) {
+        enquiry.targetId = await WeddingVendor.findById(enquiry.targetId).lean() || enquiry.targetId;
+      } else {
+        enquiry.targetId = null;
+      }
+    }
 
     res.status(200).json(enquiries);
   } catch (error) {

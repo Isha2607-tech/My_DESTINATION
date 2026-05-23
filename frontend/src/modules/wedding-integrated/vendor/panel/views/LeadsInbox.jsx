@@ -359,8 +359,8 @@ const LeadsInbox = () => {
                         onClick={() => handleSetStatus(selectedLead._id, "Contacted")}
                         className={`flex-1 py-3 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 ${
                           currentStatus === "Contacted"
-                            ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
-                            : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100"
+                            ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white shadow-xl shadow-emerald-500/30 border-2 border-emerald-500 scale-[1.02]"
+                            : "bg-white text-emerald-600 hover:bg-emerald-50 border-2 border-emerald-400 shadow-sm hover:shadow-emerald-500/10"
                         }`}
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
@@ -368,13 +368,13 @@ const LeadsInbox = () => {
                       </button>
                     )}
                     {/* Lost */}
-                    {(currentStatus === "New" || currentStatus === "Lost") && (
+                    {(currentStatus === "New" || currentStatus === "Contacted" || currentStatus === "Lost") && (
                       <button
                         onClick={() => handleSetStatus(selectedLead._id, "Lost")}
                         className={`flex-1 py-3 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 ${
                           currentStatus === "Lost"
-                            ? "bg-rose-500 text-white shadow-lg shadow-rose-200"
-                            : "bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-100"
+                            ? "bg-gradient-to-r from-rose-400 to-rose-500 text-white shadow-xl shadow-rose-500/30 border-2 border-rose-500 scale-[1.02]"
+                            : "bg-white text-rose-600 hover:bg-rose-50 border-2 border-rose-400 shadow-sm hover:shadow-rose-500/10"
                         }`}
                       >
                         <XCircle className="w-3.5 h-3.5" />
@@ -382,13 +382,13 @@ const LeadsInbox = () => {
                       </button>
                     )}
                     {/* Booked */}
-                    {(currentStatus === "New" || currentStatus === "Booked") && (
+                    {(currentStatus === "New" || currentStatus === "Contacted" || currentStatus === "Booked") && (
                       <button
                         onClick={() => handleSetStatus(selectedLead._id, "Booked")}
                         className={`flex-1 py-3 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 transition-all duration-300 active:scale-95 ${
                           currentStatus === "Booked"
-                            ? "bg-purple-500 text-white shadow-lg shadow-purple-200"
-                            : "bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100"
+                            ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-xl shadow-purple-500/30 border-2 border-purple-500 scale-[1.02]"
+                            : "bg-white text-purple-600 hover:bg-purple-50 border-2 border-purple-400 shadow-sm hover:shadow-purple-500/10"
                         }`}
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
@@ -506,31 +506,31 @@ const LeadsInbox = () => {
                 {/* Status Update Segment */}
                 <div className="bg-white rounded-[2.5rem] border border-[#F3E9E2] p-5 shadow-sm space-y-4">
                    <p className="text-[9px] font-black uppercase tracking-widest text-[#8E7E77] text-center">Update Enquiry Status</p>
-                   <div className="flex flex-col gap-2">
+                   <div className="flex flex-col gap-3">
                       {(currentStatus === "New" || currentStatus === "Contacted") && (
-                        <button onClick={() => handleSetStatus(selectedLead._id, "Contacted")} className={`w-full py-4 rounded-xl text-[11px] font-black flex items-center justify-center gap-2 ${currentStatus === "Contacted" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100" : "bg-emerald-50 text-emerald-600"}`}>
+                        <button onClick={() => handleSetStatus(selectedLead._id, "Contacted")} className={`w-full py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 transition-all ${currentStatus === "Contacted" ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white shadow-xl shadow-emerald-500/30 border-2 border-emerald-500" : "bg-white text-emerald-600 border-2 border-emerald-400"}`}>
                           <MessageCircle className="w-4 h-4" /> Contacted
                         </button>
                       )}
                       
-                      {currentStatus === "New" ? (
-                        <div className="flex gap-2">
-                          <button onClick={() => handleSetStatus(selectedLead._id, "Lost")} className="flex-1 py-4 rounded-xl text-[11px] font-black flex items-center justify-center gap-2 bg-rose-50 text-rose-500">
+                      {(currentStatus === "New" || currentStatus === "Contacted") ? (
+                        <div className="flex gap-3">
+                          <button onClick={() => handleSetStatus(selectedLead._id, "Lost")} className="flex-1 py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-white text-rose-600 border-2 border-rose-400 hover:bg-rose-50 transition-all">
                             <XCircle className="w-4 h-4" /> Reject
                           </button>
-                          <button onClick={() => handleSetStatus(selectedLead._id, "Booked")} className="flex-1 py-4 rounded-xl text-[11px] font-black flex items-center justify-center gap-2 bg-purple-50 text-purple-600">
+                          <button onClick={() => handleSetStatus(selectedLead._id, "Booked")} className="flex-1 py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-white text-purple-600 border-2 border-purple-400 hover:bg-purple-50 transition-all">
                             <CheckCheck className="w-4 h-4" /> Book
                           </button>
                         </div>
                       ) : (
                         <>
                           {currentStatus === "Lost" && (
-                            <button className="w-full py-4 rounded-xl text-[11px] font-black flex items-center justify-center gap-2 bg-rose-500 text-white shadow-lg shadow-rose-100">
+                            <button className="w-full py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-gradient-to-r from-rose-400 to-rose-500 text-white shadow-xl shadow-rose-500/30 border-2 border-rose-500">
                               <XCircle className="w-4 h-4" /> Rejected / Lost
                             </button>
                           )}
                           {currentStatus === "Booked" && (
-                            <button className="w-full py-4 rounded-xl text-[11px] font-black flex items-center justify-center gap-2 bg-purple-500 text-white shadow-lg shadow-purple-100">
+                            <button className="w-full py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-xl shadow-purple-500/30 border-2 border-purple-500">
                               <CheckCheck className="w-4 h-4" /> Booked
                             </button>
                           )}
