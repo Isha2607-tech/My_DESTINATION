@@ -14,7 +14,7 @@ const NotificationsPage = () => {
     const [selectedNotif, setSelectedNotif] = useState(null);
 
     useEffect(() => {
-        const event = new CustomEvent('rukkoo:slider', { detail: !!selectedNotif });
+        const event = new CustomEvent('mydestination:slider', { detail: !!selectedNotif });
         window.dispatchEvent(event);
     }, [selectedNotif]);
 

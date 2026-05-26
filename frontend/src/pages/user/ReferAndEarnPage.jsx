@@ -60,9 +60,9 @@ const ReferAndEarnPage = () => {
 
     const shareOptions = [
         { icon: MessageCircle, label: "WhatsApp", color: "bg-[#25D366]", action: () => window.open(`https://wa.me/?text=Book hotels at amazing prices! Use my referral code ${referralData.code} and get ₹100 off! ${referralData.link}`) },
-        { icon: Twitter, label: "Twitter", color: "bg-[#1DA1F2]", action: () => window.open(`https://twitter.com/intent/tweet?text=Get ₹100 off on your first hotel booking with Rukkoo.in! Use code: ${referralData.code}`) },
+        { icon: Twitter, label: "Twitter", color: "bg-[#1DA1F2]", action: () => window.open(`https://twitter.com/intent/tweet?text=Get ₹100 off on your first hotel booking with My DESTINATION! Use code: ${referralData.code}`) },
         { icon: Facebook, label: "Facebook", color: "bg-[#4267B2]", action: () => { } },
-        { icon: Mail, label: "Email", color: "bg-gray-600", action: () => window.open(`mailto:?subject=Get ₹100 off on Rukkoo.in&body=Use my code ${referralData.code} to get ₹100 off! ${referralData.link}`) },
+        { icon: Mail, label: "Email", color: "bg-gray-600", action: () => window.open(`mailto:?subject=Get ₹100 off on My DESTINATION&body=Use my code ${referralData.code} to get ₹100 off! ${referralData.link}`) },
     ];
 
     const howItWorks = [
@@ -82,9 +82,9 @@ const ReferAndEarnPage = () => {
 
     const handleShare = async () => {
         const shareData = {
-            title: 'Join RukkooIn & Get ₹100!',
-            text: `Hey! Book hotels at amazing prices on RukkooIn. Use my referral code ${referralData.code} to get ₹100 OFF on your first booking!`,
-            url: referralData.link || 'https://rukko.in'
+            title: 'Join My DESTINATION & Get ₹100!',
+            text: `Hey! Book hotels at amazing prices on My DESTINATION. Use my referral code ${referralData.code} to get ₹100 OFF on your first booking!`,
+            url: referralData.link || 'https://mydestination.in'
         };
 
         if (navigator.share) {

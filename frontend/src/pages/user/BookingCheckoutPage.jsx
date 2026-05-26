@@ -160,7 +160,7 @@ const BookingCheckoutPage = () => {
             key: key,
             amount: order.amount, // Net amount after wallet deduction
             currency: order.currency,
-            name: "Rukkoo.in",
+            name: "My DESTINATION",
             description: `Booking Payment`,
             order_id: order.id,
             handler: async function (response) {

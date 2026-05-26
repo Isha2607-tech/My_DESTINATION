@@ -74,7 +74,7 @@ const AddHotelWizard = () => {
   const [originalRoomTypeIds, setOriginalRoomTypeIds] = useState([]);
 
   // --- Persistence Logic ---
-  const STORAGE_KEY = `rukko_hotel_wizard_draft_${existingProperty?._id || 'new'}`;
+  const STORAGE_KEY = `mydestination_hotel_wizard_draft_${existingProperty?._id || 'new'}`;
 
   // 1. Load from localStorage on mount
   useEffect(() => {
@@ -498,7 +498,7 @@ const AddHotelWizard = () => {
     if (!url) return;
     try {
       // Optional: Delete from Cloudinary if it's our URL
-      if (url.includes('cloudinary.com') && url.includes('rukkoin')) {
+      if (url.includes('cloudinary.com') && url.includes('mydestination')) {
         await hotelService.deleteImage(url);
       }
     } catch (err) {

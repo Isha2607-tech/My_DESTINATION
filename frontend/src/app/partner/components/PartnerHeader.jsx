@@ -60,7 +60,7 @@ const PartnerHeader = ({ title, subtitle, showMenu = true }) => {
                 )}
 
                 <div className="flex-1 flex justify-center items-center">
-                    <img src={logo} alt="Rukko" className="h-12 object-contain drop-shadow-sm" />
+                    <img src={logo} alt="My DESTINATION" className="h-12 object-contain drop-shadow-sm" />
                 </div>
 
                 <div className="flex items-center gap-2">

@@ -6,42 +6,8 @@ import { isWebView } from '../../utils/deviceDetect';
 const Footer = () => {
     return (
         <footer className="bg-black text-white pt-4 md:pt-16 pb-24 md:pb-8 px-8 md:px-16 lg:px-24">
-            <div className="hidden md:grid max-w-7xl mx-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8">
+            <div className="hidden md:grid max-w-7xl mx-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8">
 
-                {/* Customer App */}
-                <div className="space-y-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Customer App</h3>
-                    <div className="flex flex-col gap-4">
-                        <a href="https://play.google.com/store/apps/details?id=com.rukkoin.user" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                            <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                                alt="Get it on Google Play"
-                                className="h-12 w-auto"
-                            />
-                        </a>
-                        <a href="#" className="hover:opacity-80 transition-opacity">
-                            <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
-                                alt="Download on the App Store"
-                                className="h-12 w-auto"
-                            />
-                        </a>
-                    </div>
-                </div>
-
-                {/* Partner App */}
-                <div className="space-y-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Partner App</h3>
-                    <div className="flex flex-col gap-4">
-                        <a href="https://play.google.com/store/apps/details?id=com.rukkoin.partner" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                            <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
-                                alt="Get it on Google Play"
-                                className="h-12 w-auto"
-                            />
-                        </a>
-                    </div>
-                </div>
 
                 {/* Quick Links */}
                 <div className="space-y-6">
@@ -62,7 +28,7 @@ const Footer = () => {
                 <div className="space-y-6">
                     <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Follow Us</h3>
                     <div className="flex gap-5">
-                        <a href="https://www.instagram.com/rukkoo.in?igsh=YWk5ZjllNGlmbXoz" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-900 rounded-full hover:bg-gray-800 transition-colors">
+                        <a href="https://www.instagram.com/My DESTINATION?igsh=YWk5ZjllNGlmbXoz" target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-900 rounded-full hover:bg-gray-800 transition-colors">
                             <Instagram size={20} className="text-gray-300" />
                         </a>
                         <a href="#" className="p-2 bg-gray-900 rounded-full hover:bg-gray-800 transition-colors">
@@ -104,7 +70,7 @@ const Footer = () => {
 
             <div className="mt-4 md:mt-20 pt-4 md:pt-8 border-t border-gray-900 text-center">
                 <p className="text-[10px] md:text-xs text-gray-600 font-medium">
-                    &copy; {new Date().getFullYear()} Premium Traders. rukkoo.in All rights reserved.
+                    &copy; {new Date().getFullYear()} Premium Traders. My DESTINATION All rights reserved.
                 </p>
             </div>
         </footer>

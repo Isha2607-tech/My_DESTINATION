@@ -94,7 +94,7 @@ const AdminLayout = () => {
                 <div className="py-2 flex items-center justify-center bg-white border-b border-gray-800 transition-all duration-300">
                     <img
                         src={logo}
-                        alt="Rukkoo.in"
+                        alt="My DESTINATION"
                         className={`object-contain transition-all duration-300 ${isSidebarOpen ? 'h-20 w-auto' : 'h-10 w-10'}`}
                     />
                 </div>

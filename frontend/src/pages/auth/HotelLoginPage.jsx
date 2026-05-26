@@ -93,7 +93,7 @@ const HotelLoginPage = () => {
                 className="w-full max-w-sm relative z-10"
             >
                 <div className="text-center mb-10">
-                    <img src={logo} alt="Rukkoo" className="w-40 h-auto mx-auto mb-6" />
+                    <img src={logo} alt="My DESTINATION" className="w-40 h-auto mx-auto mb-6" />
                     <h1 className="text-2xl font-black text-[var(--color-textDark)]">Partner Login</h1>
                     <p className="text-gray-400 text-xs font-medium mt-1">Manage your hotel property efficiently</p>
                 </div>

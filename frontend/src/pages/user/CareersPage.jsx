@@ -68,7 +68,7 @@ const CareersPage = () => {
                     ) : error ? (
                         <p className="text-center text-gray-500 py-10">
                             We are always looking for talented people to join our team. <br />
-                            Email your resume to <strong>hr@rukko.in</strong>
+                            Email your resume to <strong>hr@mydestination.in</strong>
                         </p>
                     ) : (
                         renderContent(pageData?.content || 'Currently there are no open positions. Check back soon!')

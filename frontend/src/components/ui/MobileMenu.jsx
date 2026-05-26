@@ -165,7 +165,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-5 pb-2">
-                            <img src={logo} alt="Rukko" className="h-20 object-contain" />
+                            <img src={logo} alt="My DESTINATION" className="h-20 object-contain" />
                             <button onClick={onClose} className="p-2 rounded-full bg-gray-50 hover:bg-gray-100 transition border border-gray-100">
                                 <X size={20} className="text-gray-500" />
                             </button>
@@ -218,7 +218,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
                             </div>
 
                             <div>
-                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Grow with Rukko</h4>
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 pl-2">Grow with My DESTINATION</h4>
                                 <div className="flex flex-col gap-1">{growthItems.map((item, idx) => <MenuItem key={idx} {...item} />)}</div>
                             </div>
 

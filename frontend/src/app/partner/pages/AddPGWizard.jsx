@@ -90,7 +90,7 @@ const AddPGWizard = () => {
   const [originalRoomTypeIds, setOriginalRoomTypeIds] = useState([]);
 
   // --- Persistence Logic ---
-  const STORAGE_KEY = `rukko_pg_wizard_draft_${existingProperty?._id || 'new'}`;
+  const STORAGE_KEY = `mydestination_pg_wizard_draft_${existingProperty?._id || 'new'}`;
 
   // 1. Load from localStorage
   useEffect(() => {
@@ -492,7 +492,7 @@ const AddPGWizard = () => {
   const handleRemoveImage = async (url, type, index = null) => {
     if (!url) return;
     try {
-      if (url.includes('cloudinary.com') && url.includes('rukkoin')) {
+      if (url.includes('cloudinary.com') && url.includes('mydestination')) {
         await hotelService.deleteImage(url);
       }
     } catch (err) {

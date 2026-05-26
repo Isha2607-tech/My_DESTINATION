@@ -42,7 +42,7 @@ const PartnerContact = () => {
         subject,
         message
       });
-      setSuccess('Your message has been sent to the Rukko team.');
+      setSuccess('Your message has been sent to the My DESTINATION team.');
       setName('');
       setEmail('');
       setPhone('');
@@ -57,7 +57,7 @@ const PartnerContact = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PartnerHeader title="Contact Partner Support" subtitle="Reach the Rukko team" showMenu={false} />
+      <PartnerHeader title="Contact Partner Support" subtitle="Reach the My DESTINATION team" showMenu={false} />
 
       <main ref={contentRef} className="max-w-3xl mx-auto px-4 pt-6 space-y-4">
         <div className="grid grid-cols-2 gap-3">
@@ -68,10 +68,10 @@ const PartnerContact = () => {
             <div>
               <p className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Email</p>
               <a
-                href="mailto:rukkoohub@gmail.com"
+                href="mailto:mydestinationhub@gmail.com"
                 className="text-xs text-gray-500 hover:text-[var(--color-surface)] transition-colors break-all"
               >
-                rukkoohub@gmail.com
+                mydestinationhub@gmail.com
               </a>
             </div>
           </div>

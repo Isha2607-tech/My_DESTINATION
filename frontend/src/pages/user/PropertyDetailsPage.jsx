@@ -279,8 +279,8 @@ const PropertyDetailsPage = () => {
 
   const handleShare = async () => {
     const shareData = {
-      title: property?.name || 'Rukkoo Stay',
-      text: `Check out ${property?.name || 'this amazing place'} on Rukkoo!`,
+      title: property?.name || 'My DESTINATION Stay',
+      text: `Check out ${property?.name || 'this amazing place'} on My DESTINATION!`,
       url: window.location.href
     };
 

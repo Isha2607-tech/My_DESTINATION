@@ -141,9 +141,9 @@ const WeddingLayout = () => {
 
   // Hide the main app's navbars when wedding module is active
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('rukkoo:slider', { detail: true }));
+    window.dispatchEvent(new CustomEvent('mydestination:slider', { detail: true }));
     return () => {
-      window.dispatchEvent(new CustomEvent('rukkoo:slider', { detail: false }));
+      window.dispatchEvent(new CustomEvent('mydestination:slider', { detail: false }));
     };
   }, []);
 

@@ -55,7 +55,7 @@ const StepUserRegistration = () => {
           onChange={e => handleChange('termsAccepted', e.target.checked)}
         />
         <label htmlFor="terms" className="text-xs text-gray-500 leading-relaxed">
-          I agree to the <Link to="/terms?audience=partner" className="text-[var(--color-surface)] font-bold hover:underline">Terms & Conditions</Link> and <Link to="/privacy?audience=partner" className="text-[var(--color-surface)] font-bold hover:underline">Privacy Policy</Link> of Rukko Partner.
+          I agree to the <Link to="/terms?audience=partner" className="text-[var(--color-surface)] font-bold hover:underline">Terms & Conditions</Link> and <Link to="/privacy?audience=partner" className="text-[var(--color-surface)] font-bold hover:underline">Privacy Policy</Link> of My DESTINATION Partner.
         </label>
       </div>
     </div>

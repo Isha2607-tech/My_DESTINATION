@@ -112,7 +112,7 @@ const LegalPage = () => {
                     </div>
                     {renderContent(
                         'Privacy Policy',
-                        'At Rukko, we take your privacy seriously. This policy describes how we collect, use, and handle your data.',
+                        'At My DESTINATION, we take your privacy seriously. This policy describes how we collect, use, and handle your data.',
                         privacy
                     )}
                 </div>
@@ -126,7 +126,7 @@ const LegalPage = () => {
                     </div>
                     {renderContent(
                         'Terms & Conditions',
-                        'By using Rukko, you agree to the latest booking, cancellation and usage terms defined by the platform.',
+                        'By using My DESTINATION, you agree to the latest booking, cancellation and usage terms defined by the platform.',
                         terms
                     )}
                 </div>

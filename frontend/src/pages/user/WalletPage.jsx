@@ -109,7 +109,7 @@ const WalletPage = () => {
                 key: data.order.key,
                 amount: data.order.amount,
                 currency: data.order.currency,
-                name: 'Rukkoin',
+                name: 'My DESTINATION',
                 description: 'Wallet Top-up',
                 order_id: data.order.id,
                 handler: async function (response) {

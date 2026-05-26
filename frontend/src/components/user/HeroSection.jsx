@@ -88,7 +88,7 @@ const HeroSection = () => {
                 <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-0.5">
                     <img
                         src={logo}
-                        alt="Rukko Logo"
+                        alt="My DESTINATION Logo"
                         className="h-10 object-contain"
                     />
                 </div>

@@ -98,7 +98,7 @@ const AddHomestayWizard = () => {
   const [originalRoomTypeIds, setOriginalRoomTypeIds] = useState([]);
 
   // --- Persistence Logic ---
-  const STORAGE_KEY = `rukko_homestay_wizard_draft_${existingProperty?._id || 'new'}`;
+  const STORAGE_KEY = `mydestination_homestay_wizard_draft_${existingProperty?._id || 'new'}`;
 
   // 1. Load from localStorage
   useEffect(() => {
@@ -461,7 +461,7 @@ const AddHomestayWizard = () => {
   const handleRemoveImage = async (url, type, index = null) => {
     if (!url) return;
     try {
-      if (url.includes('cloudinary.com') && url.includes('rukkoin')) {
+      if (url.includes('cloudinary.com') && url.includes('mydestination')) {
         await hotelService.deleteImage(url);
       }
     } catch (err) {
