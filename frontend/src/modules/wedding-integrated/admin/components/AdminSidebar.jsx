@@ -19,7 +19,8 @@ import {
   Briefcase,
   Building2,
   Palette,
-  FolderPlus
+  FolderPlus,
+  Layers
 } from 'lucide-react';
 import { adminStyles } from '../theme/themeConfig';
 import toast from 'react-hot-toast';
@@ -39,6 +40,7 @@ const menuItems = [
   { icon: Briefcase, label: 'Manage Customers', path: '/wedding/admin/customers' },
   { icon: MessageSquare, label: 'Enquiries', path: '/wedding/admin/enquiries' },
   { icon: CreditCard, label: 'Financials', path: '/wedding/admin/financials' },
+  { icon: Layers, label: 'Subscriptions', path: '/wedding/admin/subscriptions' },
   { icon: MapPin, label: 'Destinations', path: '/wedding/admin/destinations' },
   { icon: Building2, label: 'Venue Approval', path: '/wedding/admin/venues' },
   { icon: Palette, label: 'Categories', path: '/wedding/admin/categories' },
@@ -51,6 +53,7 @@ const menuItems = [
     path: '/wedding/admin/settings',
     subItems: [
       { label: 'Appearance', path: '/wedding/admin/settings/appearance', icon: Palette },
+      { label: 'Platform Fees', path: '/wedding/admin/settings/financial', icon: CreditCard },
     ]
   },
 ];

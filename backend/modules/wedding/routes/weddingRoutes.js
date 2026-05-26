@@ -2,7 +2,8 @@ import express from 'express';
 import { 
   registerVendor, 
   loginVendor,
-  updatePassword
+  updatePassword,
+  getMe
 } from '../controllers/weddingAuthController.js';
 import { 
   getVenues, 
@@ -41,7 +42,9 @@ import {
   deleteEnquiry,
   getVendorLeads,
   updateLeadStatus,
-  getMyEnquiries
+  getMyEnquiries,
+  confirmBooking,
+  markVendorPaymentReceived
 } from '../controllers/weddingEnquiryController.js';
 import { 
   getGallery, 
@@ -83,6 +86,15 @@ import {
   updateCustomerBlockStatus,
   deleteCustomer
 } from '../controllers/weddingAdminController.js';
+import {
+  createPlan,
+  getAllPlans,
+  updatePlan,
+  deletePlan,
+  purchaseSubscription
+} from '../controllers/weddingSubscriptionController.js';
+import { getSettings, updateSettings } from '../controllers/weddingPlatformSettingsController.js';
+import { getWallet, addMoney } from '../controllers/vendorWalletController.js';
 import { protect, authorizedRoles, optionalProtect } from '../../../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -102,6 +114,7 @@ router.get('/testimonials', getApprovedTestimonials);
 router.post('/testimonials', submitTestimonial);
 router.post('/support', createTicket);
 router.get('/support/:ticketId', getTicketById);
+router.get('/subscriptions', optionalProtect, getAllPlans);
 
 // Public Vendor Application (No auth required)
 router.post('/vendor/apply', applyAsVendor);
@@ -111,6 +124,7 @@ router.patch('/increment-view/:type/:id', incrementView);
 router.get('/reviews/:targetId', getPublicReviews);
 router.post('/reviews', optionalProtect, createReview);
 router.get('/my-enquiries', protect, getMyEnquiries);
+router.post('/enquiries/:id/pay-and-book', protect, confirmBooking);
 
 // Auth Routes (Vendor)
 router.post('/vendor/register', registerVendor);
@@ -121,6 +135,7 @@ router.get('/vendor/dashboard/stats', protect, authorizedRoles('vendor'), getVen
 router.get('/vendor/profile', protect, authorizedRoles('vendor'), getVendorProfile);
 router.post('/vendor/profile', protect, authorizedRoles('user', 'vendor'), updateVendorProfile);
 router.patch('/vendor/password', protect, authorizedRoles('vendor'), updatePassword);
+router.get('/vendor/me', protect, authorizedRoles('vendor'), getMe);
 
 // Vendor Venue Routes (Protected)
 router.post('/vendor/venues', protect, authorizedRoles('vendor'), createVenue);
@@ -131,10 +146,18 @@ router.delete('/vendor/venues/:id', protect, authorizedRoles('vendor'), deleteVe
 // Vendor Lead Routes (Protected)
 router.get('/vendor/leads', protect, authorizedRoles('vendor'), getVendorLeads);
 router.patch('/vendor/leads/:id/status', protect, authorizedRoles('vendor'), updateLeadStatus);
+router.patch('/vendor/leads/:id/payment-status', protect, authorizedRoles('vendor'), markVendorPaymentReceived);
 
 // Vendor Review Routes (Protected)
 router.get('/vendor/reviews', protect, authorizedRoles('vendor'), getVendorReviews);
 router.patch('/vendor/reviews/:id/reply', protect, authorizedRoles('vendor'), replyToReview);
+
+// Vendor Subscription Routes (Protected)
+router.post('/vendor/subscriptions/purchase', protect, authorizedRoles('vendor'), purchaseSubscription);
+
+// Vendor Wallet Routes (Protected)
+router.get('/vendor/wallet', protect, authorizedRoles('vendor'), getWallet);
+router.post('/vendor/wallet/add', protect, authorizedRoles('vendor'), addMoney);
 
 // Admin Auth Routes (Public)
 router.post('/admin/login', loginWeddingAdmin);
@@ -164,6 +187,13 @@ router.get('/admin/vendors', protect, authorizedRoles('admin', 'superadmin'), ge
 router.patch('/admin/vendors/:id/status', protect, authorizedRoles('admin', 'superadmin'), updateVendorStatus);
 router.get('/admin/financials', protect, authorizedRoles('admin', 'superadmin'), getAdminFinancials);
 
+// Admin Platform Settings Routes
+router.get('/admin/settings/financial', protect, authorizedRoles('admin', 'superadmin'), getSettings);
+router.patch('/admin/settings/financial', protect, authorizedRoles('admin', 'superadmin'), updateSettings);
+
+// Public Settings Routes
+router.get('/settings/financial', getSettings);
+
 // Admin Destination Routes
 router.post('/admin/destinations', protect, authorizedRoles('admin', 'superadmin'), addDestination);
 router.patch('/admin/destinations/:id', protect, authorizedRoles('admin', 'superadmin'), updateDestination);
@@ -184,5 +214,11 @@ router.get('/admin/support', protect, authorizedRoles('admin', 'superadmin'), ge
 router.patch('/admin/support/:id/resolve', protect, authorizedRoles('admin', 'superadmin'), resolveTicket);
 router.post('/admin/support/resolve-all', protect, authorizedRoles('admin', 'superadmin'), resolveAllTickets);
 router.patch('/admin/support/:id/reply', protect, authorizedRoles('admin', 'superadmin'), replyToTicket);
+
+// Admin Subscription Routes
+router.post('/admin/subscriptions', protect, authorizedRoles('admin', 'superadmin'), createPlan);
+router.get('/admin/subscriptions', protect, authorizedRoles('admin', 'superadmin'), getAllPlans);
+router.patch('/admin/subscriptions/:id', protect, authorizedRoles('admin', 'superadmin'), updatePlan);
+router.delete('/admin/subscriptions/:id', protect, authorizedRoles('admin', 'superadmin'), deletePlan);
 
 export default router;

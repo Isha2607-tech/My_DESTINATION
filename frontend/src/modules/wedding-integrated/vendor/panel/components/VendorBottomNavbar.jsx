@@ -8,7 +8,9 @@ import {
   Star,
   Settings,
   Building2,
-  PlusCircle
+  PlusCircle,
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,6 +20,8 @@ const allNavItems = [
   { id: "add-venue", label: "Add Venue", icon: PlusCircle, path: "/wedding/vendor/venues/add", venueOnly: true },
   { id: "my-venues", label: "My Venues", icon: Building2, path: "/wedding/vendor/venues/my", venueOnly: true },
   { id: "reviews", label: "Love", icon: Star, path: "/wedding/vendor/reviews", venueOnly: false },
+  { id: "subscription", label: "Plan", icon: CreditCard, path: "/wedding/vendor/subscription", venueOnly: false },
+  { id: "wallet", label: "Wallet", icon: Wallet, path: "/wedding/vendor/wallet", venueOnly: false },
   { id: "profile", label: "Profile", icon: UserCircle, path: "/wedding/vendor/profile", venueOnly: false },
   { id: "settings", label: "Admin", icon: Settings, path: "/wedding/vendor/settings", venueOnly: false },
 ];

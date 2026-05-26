@@ -1,6 +1,9 @@
 import WeddingEnquiry from '../models/WeddingEnquiry.js';
 import WeddingVendor from '../models/WeddingVendor.js';
 import WeddingVenue from '../models/WeddingVenue.js';
+import VendorWallet from '../models/VendorWallet.js';
+import WeddingPlatformSettings from '../models/WeddingPlatformSettings.js';
+import User from '../../user/models/User.js';
 import { createNotification } from '../../notification/controllers/notificationController.js';
 
 /**
@@ -30,6 +33,8 @@ export const createEnquiry = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields (name, email, phone)' });
     }
 
+    const settings = await WeddingPlatformSettings.findOne() || { platformFee: 499 };
+
     const enquiry = await WeddingEnquiry.create({
       name,
       email,
@@ -42,6 +47,7 @@ export const createEnquiry = async (req, res) => {
       services: services || selectedServices,
       targetType: targetType || 'General',
       targetId: targetId || null,
+      platformFee: settings.platformFee,
       user: req.user ? req.user._id : null
     });
 
@@ -78,11 +84,18 @@ export const createEnquiry = async (req, res) => {
 
 export const getMyEnquiries = async (req, res) => {
   try {
+    const queryOr = [
+      { user: req.user._id }
+    ];
+    const getPhoneRegex = (phone) => new RegExp(`^0?${phone.replace(/^0+/, '')}$`);
+
+    if (req.user.email) queryOr.push({ email: req.user.email });
+    if (req.user.phone) queryOr.push({ phone: { $regex: getPhoneRegex(req.user.phone) } });
+    if (req.user.mobile) queryOr.push({ phone: { $regex: getPhoneRegex(req.user.mobile) } });
+    if (req.user.mobileNumber) queryOr.push({ phone: { $regex: getPhoneRegex(req.user.mobileNumber) } });
+
     const enquiries = await WeddingEnquiry.find({ 
-      $or: [
-        { user: req.user._id },
-        { email: req.user.email }
-      ]
+      $or: queryOr
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -202,5 +215,107 @@ export const deleteEnquiry = async (req, res) => {
     res.status(200).json({ success: true, message: 'Enquiry deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const markVendorPaymentReceived = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const enquiry = await WeddingEnquiry.findById(id);
+    if (!enquiry) return res.status(404).json({ message: 'Enquiry not found' });
+
+    const vendorProfile = await WeddingVendor.findOne({ user: req.user._id });
+    const venueProfile = await WeddingVenue.findOne({ vendor: req.user._id });
+    
+    const isOwner = (vendorProfile && enquiry.targetId.equals(vendorProfile._id)) || 
+                    (venueProfile && enquiry.targetId.equals(venueProfile._id));
+
+    if (!isOwner) {
+      return res.status(403).json({ message: 'Not authorized to update this lead' });
+    }
+
+    enquiry.vendorPaymentStatus = 'Received';
+    await enquiry.save();
+    
+    res.status(200).json({ success: true, message: 'Payment marked as received', enquiry });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+  export const confirmBooking = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { bookingAmount } = req.body;
+      const enquiry = await WeddingEnquiry.findById(id);
+
+    if (!enquiry) return res.status(404).json({ success: false, message: 'Enquiry not found' });
+    if (enquiry.status === 'Booked') return res.status(400).json({ success: false, message: 'Already booked' });
+
+    let vendorUserId = null;
+    if (enquiry.targetType === 'Venue' || enquiry.targetType === 'venue') {
+      const venue = await WeddingVenue.findById(enquiry.targetId);
+      if (venue) vendorUserId = venue.vendor;
+    } else {
+      const vendor = await WeddingVendor.findById(enquiry.targetId);
+      if (vendor) vendorUserId = vendor.user;
+    }
+
+    if (!vendorUserId) return res.status(400).json({ success: false, message: 'Vendor not found' });
+
+    // Fetch settings to get dynamic fees
+    const settings = await WeddingPlatformSettings.findOne() || { 
+      vendorCommission: 499, platformFee: 499,
+      platformFeeType: 'fixed', vendorCommissionType: 'fixed'
+    };
+    
+    const parsedBookingAmount = Number(bookingAmount) || 0;
+    
+    let calculatedPlatformFee = settings.platformFee;
+    if (settings.platformFeeType === 'percentage') {
+      calculatedPlatformFee = Math.round(parsedBookingAmount * (settings.platformFee / 100));
+    }
+
+    let calculatedVendorCommission = settings.vendorCommission;
+    if (settings.vendorCommissionType === 'percentage') {
+      calculatedVendorCommission = Math.round(parsedBookingAmount * (settings.vendorCommission / 100));
+    }
+
+    // Vendor Wallet Deduction Logic
+    let wallet = await VendorWallet.findOne({ vendorUser: vendorUserId });
+    if (!wallet) {
+      wallet = await VendorWallet.create({
+        vendorUser: vendorUserId,
+        balance: 0,
+        transactions: []
+      });
+    }
+
+    // Deduct from wallet balance (allowing negative balance)
+    wallet.balance -= Number(calculatedVendorCommission);
+    wallet.transactions.push({
+      type: 'debit',
+      amount: Number(calculatedVendorCommission),
+      description: `Commission for Booking Enquiry ID: ${enquiry._id}`,
+      date: new Date()
+    });
+    
+    await wallet.save();
+
+    // Record the financial transaction details for the Admin Dashboard
+    enquiry.status = 'Booked';
+    enquiry.paymentStatus = 'Paid';
+    enquiry.commissionAmount = calculatedVendorCommission;
+    enquiry.platformFee = calculatedPlatformFee;
+    enquiry.actualAmount = calculatedPlatformFee; 
+    enquiry.bookingAmount = parsedBookingAmount;
+    
+    await enquiry.save();
+
+    res.status(200).json({ success: true, message: 'Booking confirmed and commission deducted!', enquiry });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

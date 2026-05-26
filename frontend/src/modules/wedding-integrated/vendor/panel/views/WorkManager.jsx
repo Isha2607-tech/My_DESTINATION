@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Camera, 
@@ -13,159 +13,94 @@ import {
   Video
 } from "lucide-react";
 import VendorLayout from "../layouts/VendorLayout";
-
+import { getVendor, updateVendor } from "../../data/vendorApi";
+import { toast } from "react-hot-toast";
 
 const WorkManager = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Portfolio");
-  const [viewMode, setViewMode] = useState("hub"); // 'hub' or 'gallery'
-  const [projects, setProjects] = useState(() => {
-    const savedProjects = localStorage.getItem('vendorProjects');
-    if (savedProjects) return JSON.parse(savedProjects);
-    
-    // Migration: Convert existing data to first project
-    const current = localStorage.getItem('vendorPreviewData');
-    if (current) {
+  const [viewMode, setViewMode] = useState("hub");
+  const [projects, setProjects] = useState([]);
+  const [activeProject, setActiveProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [vendorId, setVendorId] = useState(null);
+
+  useEffect(() => {
+    const fetchVendorData = async () => {
       try {
-        const data = JSON.parse(current);
-        const initialProjects = [{ ...data, id: Date.now() }];
-        localStorage.setItem('vendorProjects', JSON.stringify(initialProjects));
-        return initialProjects;
-      } catch (e) {
-        console.error("Storage Quota Exceeded during migration:", e);
-        return [];
-      }
-    }
-    return [];
-  });
-
-  const [activeProject, setActiveProject] = useState(() => {
-    const saved = localStorage.getItem('vendorPreviewData');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  // Sync with global active project
-  React.useEffect(() => {
-    const handleUpdate = (e) => {
-      if (e.detail) {
-        setActiveProject(e.detail);
-        // Also update in projects list
-        setProjects(prev => {
-           const updated = prev.map(p => p.id === e.detail.id ? e.detail : p);
-           try {
-             localStorage.setItem('vendorProjects', JSON.stringify(updated));
-           } catch (err) {
-             console.warn("Could not save all projects to local storage - quota exceeded.");
-           }
-           return updated;
-        });
-
+        const res = await getVendor();
+        if (res.success && res.vendor) {
+          setVendorId(res.vendor._id);
+          setProjects(res.vendor.projects || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch vendor data", err);
+      } finally {
+        setLoading(false);
       }
     };
-    window.addEventListener('vendorProfileUpdate', handleUpdate);
-    return () => window.removeEventListener('vendorProfileUpdate', handleUpdate);
+    fetchVendorData();
   }, []);
 
   const selectProject = (proj) => {
     setActiveProject(proj);
-    localStorage.setItem('vendorPreviewData', JSON.stringify(proj));
-    window.dispatchEvent(new CustomEvent('vendorProfileUpdate', { detail: proj }));
     setViewMode("gallery");
   };
 
-  const createNewProject = () => {
+  const syncToBackend = async (updatedProjects) => {
+    try {
+      const res = await updateVendor(vendorId, { projects: updatedProjects });
+      if (!res.success) throw new Error(res.error || "Failed to update backend");
+      setProjects(updatedProjects);
+      if (activeProject) {
+        const updatedActive = updatedProjects.find(p => p._id === activeProject._id || p.id === activeProject.id);
+        setActiveProject(updatedActive || null);
+      }
+      return true;
+    } catch (e) {
+      toast.error(e.message || "Failed to save portfolio");
+      return false;
+    }
+  };
+
+  const createNewProject = async () => {
     const newProject = {
-      id: Date.now(),
+      id: Date.now().toString(),
       name: "New Portfolio",
       location: "",
       portfolio: [],
       albums: [],
       videos: [],
-      price: { base: "", type: "per_day" }
+      price: { base: 0, type: "total" }
     };
-    setActiveProject(newProject);
-    localStorage.setItem('vendorPreviewData', JSON.stringify(newProject));
-    window.dispatchEvent(new CustomEvent('vendorProfileUpdate', { detail: newProject }));
-    navigate('/vendor/profile');
+    const updatedProjects = [...projects, newProject];
+    const success = await syncToBackend(updatedProjects);
+    if (success) {
+      const createdProj = updatedProjects[updatedProjects.length - 1];
+      setActiveProject(createdProj);
+      toast.success("Portfolio created successfully");
+    }
   };
 
-  const deleteProject = (e, id) => {
+  const deleteProject = async (e, id) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this entire portfolio?")) {
-      const updated = projects.filter(p => p.id !== id);
-      setProjects(updated);
-      localStorage.setItem('vendorProjects', JSON.stringify(updated));
+      const updated = projects.filter(p => p._id !== id && p.id !== id);
+      await syncToBackend(updated);
       
-      // If we deleted the active project, clear it
-      if (activeProject && activeProject.id === id) {
-        localStorage.removeItem('vendorPreviewData');
+      if (activeProject && (activeProject._id === id || activeProject.id === id)) {
         setActiveProject(null);
+        setViewMode("hub");
       }
+      toast.success("Portfolio deleted");
     }
   };
 
-   // Save changes locally and broadcast
-  const updateStore = (newData) => {
-
-    setActiveProject(newData);
-    try {
-      localStorage.setItem('vendorPreviewData', JSON.stringify(newData));
-      
-      // Update main projects list
-      const updatedProjects = projects.map(p => p.id === newData.id ? newData : p);
-      setProjects(updatedProjects);
-      localStorage.setItem('vendorProjects', JSON.stringify(updatedProjects));
-    } catch (e) {
-      alert("Browser storage limit reached! Please try reducing image sizes or number of portfolios.");
-    }
-    
-    window.dispatchEvent(new CustomEvent('vendorProfileUpdate', { detail: newData }));
-  };
-
-
-  const handlePortfolioUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newData = { 
-          ...activeProject, 
-          portfolio: [reader.result, ...(activeProject.portfolio || [])].slice(0, 20) 
-        };
-        updateStore(newData);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAlbumUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const existingAlbum = activeProject.albums && activeProject.albums.length > 0 ? activeProject.albums[0] : null;
-    const currentImages = existingAlbum ? (existingAlbum.images || []) : [];
-
-    if (currentImages.length + files.length > 10) {
-      alert(`Limit is 10 images. You have ${currentImages.length}.`);
-      return;
-    }
-
-    const loaders = files.map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-    });
-
-    Promise.all(loaders).then(newImages => {
-      const updatedAlbums = activeProject.albums ? [...activeProject.albums] : [];
-      if (updatedAlbums.length > 0) {
-        const merged = [...updatedAlbums[0].images, ...newImages];
-        updatedAlbums[0] = { ...updatedAlbums[0], images: merged, count: merged.length, cover: merged[0] };
-      } else {
-        updatedAlbums.push({ name: "Weddings Gallery", images: newImages, count: newImages.length, cover: newImages[0] });
-      }
-      updateStore({ ...activeProject, albums: updatedAlbums });
-    });
+  const updateStore = async (newData) => {
+    const updatedProjects = projects.map(p => 
+      (p._id === newData._id || p.id === newData.id) ? newData : p
+    );
+    await syncToBackend(updatedProjects);
   };
 
   const handleDelete = (type, index) => {
@@ -180,6 +115,10 @@ const WorkManager = () => {
     updateStore(newData);
   };
 
+
+  if (loading) {
+    return <VendorLayout title="My Work"><div className="p-8 text-center text-slate-500">Loading your portfolios...</div></VendorLayout>;
+  }
 
   return (
     <VendorLayout title="My Work">
@@ -205,7 +144,7 @@ const WorkManager = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((proj) => (
-                <div key={proj.id} className="group bg-white rounded-[2rem] md:rounded-[2.5rem] border border-[#F3E9E2] overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+                <div key={proj._id || proj.id} className="group bg-white rounded-[2rem] md:rounded-[2.5rem] border border-[#F3E9E2] overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
                   <div className="aspect-[2.4/1] md:aspect-[16/10] bg-slate-100 relative transition-all duration-700">
                     {proj.portfolio && proj.portfolio[0] ? (
                       <img src={proj.portfolio[0]} alt="" className="w-full h-full object-cover" />
@@ -219,13 +158,7 @@ const WorkManager = () => {
                     {/* Floating Action Icons over the image */}
                     <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 md:translate-x-2 md:opacity-0 md:group-hover:translate-x-0 md:group-hover:opacity-100 transition-all duration-500">
                       <button 
-                        onClick={() => navigate('/vendor/profile', { state: { id: proj.id } })}
-                        className="w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur text-[#4A3730] rounded-xl flex items-center justify-center shadow-lg hover:bg-[#B06A6C] hover:text-white transition-all active:scale-90"
-                      >
-                        <Edit2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
-                      </button>
-                      <button 
-                        onClick={(e) => deleteProject(e, proj.id)}
+                        onClick={(e) => deleteProject(e, proj._id || proj.id)}
                         className="w-8 h-8 md:w-10 md:h-10 bg-rose-500 shadow-lg shadow-rose-200 text-white rounded-xl flex items-center justify-center hover:bg-rose-600 transition-all active:scale-90"
                       >
                         <Trash2 className="w-4 h-4 md:w-4.5 md:h-4.5" />
@@ -252,6 +185,9 @@ const WorkManager = () => {
                   </div>
                 </div>
               ))}
+              {projects.length === 0 && (
+                <div className="col-span-full py-12 text-center text-slate-400 italic">No portfolios created yet.</div>
+              )}
             </div>
           </div>
         ) : (
@@ -297,10 +233,10 @@ const WorkManager = () => {
                   </div>
                   <div className="flex items-center gap-3">
                      <button 
-                       onClick={() => navigate('/vendor/profile', { state: { tab: 'Project' } })}
+                       onClick={() => toast.success("Use the main Vendor Profile tab to edit details.")}
                        className="hidden sm:flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#B06A6C] text-white font-bold text-sm shadow-xl shadow-[#B06A6C]/20 hover:scale-105 transition-all"
                      >
-                       <Edit2 className="w-4 h-4" /> Edit Profile
+                       <Edit2 className="w-4 h-4" /> Edit Details
                      </button>
                   </div>
                </div>

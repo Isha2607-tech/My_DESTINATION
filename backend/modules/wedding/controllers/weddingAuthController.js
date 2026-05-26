@@ -47,7 +47,10 @@ export const registerVendor = async (req, res) => {
         phone: user.phone,
         role: user.role,
         category: user.category,
-        partnerApprovalStatus: user.partnerApprovalStatus
+        partnerApprovalStatus: user.partnerApprovalStatus,
+        hasActiveSubscription: user.hasActiveSubscription || false,
+        leadsRemaining: user.leadsRemaining || 0,
+        subscriptionExpiryDate: user.subscriptionExpiryDate || null
       }
     });
   } catch (error) {
@@ -99,7 +102,10 @@ export const loginVendor = async (req, res) => {
         phone: user.phone,
         role: user.role,
         category: user.category,
-        partnerApprovalStatus: user.partnerApprovalStatus
+        partnerApprovalStatus: user.partnerApprovalStatus,
+        hasActiveSubscription: user.hasActiveSubscription || false,
+        leadsRemaining: user.leadsRemaining || 0,
+        subscriptionExpiryDate: user.subscriptionExpiryDate || null
       }
     });
   } catch (error) {
@@ -131,5 +137,34 @@ export const updatePassword = async (req, res) => {
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get current logged-in vendor's fresh profile data
+// @route   GET /api/wedding/vendor/me
+// @access  Private (Vendor)
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        category: user.category,
+        partnerApprovalStatus: user.partnerApprovalStatus,
+        hasActiveSubscription: user.hasActiveSubscription || false,
+        leadsRemaining: user.leadsRemaining || 0,
+        subscriptionExpiryDate: user.subscriptionExpiryDate || null,
+        subscriptionPlanId: user.subscriptionPlanId || null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

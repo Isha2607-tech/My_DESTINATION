@@ -11,6 +11,22 @@ import {
 import { adminStyles } from '../theme/themeConfig';
 import { weddingService } from '../../../../services/weddingService';
 
+const formatRequirement = (msg) => {
+  if (!msg) return <span className="text-gray-400 italic">No details provided</span>;
+  const match = msg.match(/\[Interested In: (.*?)\](.*)/);
+  if (match) {
+    const packageInfo = match[1].trim();
+    const userMsg = match[2].trim();
+    return (
+      <div className="flex flex-col gap-1.5">
+        {packageInfo && <span className="font-bold text-[10px] text-[hsl(353,45%,35%)] bg-[hsl(353,45%,35%)]/10 px-2 py-0.5 rounded uppercase tracking-wider w-fit">{packageInfo}</span>}
+        {userMsg && <span className="text-sm text-gray-600 whitespace-normal line-clamp-2 leading-snug">{userMsg}</span>}
+      </div>
+    );
+  }
+  return <p className="text-sm text-gray-600 whitespace-normal line-clamp-2 leading-snug">{msg}</p>;
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState([]);
@@ -115,8 +131,8 @@ const AdminDashboard = () => {
                       <p className="font-bold text-lg text-[hsl(353,20%,15%)]">{enq.name}</p>
                       <p className="text-xs text-gray-500">{enq.phone}</p>
                     </td>
-                    <td className="py-6">
-                       <p className="text-sm text-gray-600 truncate w-48">{enq.message}</p>
+                    <td className="py-6 pr-4">
+                       {formatRequirement(enq.message)}
                     </td>
                     <td className="py-6">
                       <div className="flex flex-col text-gray-700">

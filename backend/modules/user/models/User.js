@@ -122,7 +122,12 @@ const userSchema = new mongoose.Schema({
     type: String, 
     enum: ['Pending', 'Verified', 'Rejected'], 
     default: 'Pending' 
-  }
+  },
+  // Vendor Subscription fields
+  hasActiveSubscription: { type: Boolean, default: false },
+  subscriptionPlanId: { type: mongoose.Schema.Types.ObjectId, ref: 'WeddingSubscriptionPlan' },
+  leadsRemaining: { type: Number, default: 0 },
+  subscriptionExpiryDate: { type: Date }
 }, { timestamps: true });
 
 // Compound indexes to allow same phone/email for different roles

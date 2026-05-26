@@ -837,6 +837,14 @@ export const weddingVendorService = {
       throw error.response?.data || error.message;
     }
   },
+  markPaymentReceived: async (id) => {
+    try {
+      const response = await api.patch(`/wedding/vendor/leads/${id}/payment-status`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
   getReviews: async () => {
     try {
       const response = await api.get('/wedding/vendor/reviews');
@@ -984,6 +992,12 @@ export const weddingEnquiryService = {
     } catch (error) {
       throw error.response?.data || error.message;
     }
+  },
+  confirmBooking: async (id, payload = {}) => { try { const response = await api.post(`/wedding/enquiries/${id}/pay-and-book`, payload);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
   }
 };
 
@@ -1036,4 +1050,24 @@ export const faqService = {
   }
 };
 
+export const platformSettingsService = {
+  getSettings: async () => {
+    try {
+      const response = await api.get('/wedding/admin/settings/financial');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  updateSettings: async (data) => {
+    try {
+      const response = await api.patch('/wedding/admin/settings/financial', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  }
+};
+
 export default api;
+

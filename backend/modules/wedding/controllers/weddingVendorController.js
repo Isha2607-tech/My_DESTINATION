@@ -182,6 +182,8 @@ export const updateVendorProfile = async (req, res) => {
   try {
     const { basicInfo, portfolio, services, pricing, kyc } = req.body;
 
+    let vendor = await WeddingVendor.findOne({ user: req.user._id });
+
     const profileData = {
       user: req.user._id,
       name: basicInfo?.name || req.body.name,
@@ -201,10 +203,8 @@ export const updateVendorProfile = async (req, res) => {
         type: 'total'
       },
       services: services || [],
-      status: 'pending' // Set status to pending on submission
+      status: vendor ? vendor.status : 'pending' // Preserve status if existing, otherwise pending
     };
-
-    let vendor = await WeddingVendor.findOne({ user: req.user._id });
 
     if (vendor) {
       // Update existing
@@ -220,9 +220,14 @@ export const updateVendorProfile = async (req, res) => {
 
     // Sync status and details to User model for Admin visibility
     const User = mongoose.model('User');
+    const currentUser = await User.findById(req.user._id);
+    const newApprovalStatus = currentUser?.partnerApprovalStatus === 'approved' 
+      ? 'approved' 
+      : (currentUser?.partnerApprovalStatus || 'pending');
+
     await User.findByIdAndUpdate(req.user._id, {
       role: 'vendor',
-      partnerApprovalStatus: 'pending',
+      partnerApprovalStatus: newApprovalStatus,
       category: profileData.category,
       location: profileData.location,
       experience: profileData.experience,
@@ -279,9 +284,13 @@ export const applyAsVendor = async (req, res) => {
     if (existingUser) {
       // Update existing user's vendor application
       user = existingUser;
+      const newApprovalStatus = existingUser.partnerApprovalStatus === 'approved' 
+        ? 'approved' 
+        : (existingUser.partnerApprovalStatus || 'pending');
+
       await User.findByIdAndUpdate(user._id, {
         name: basicInfo.name,
-        partnerApprovalStatus: 'pending',
+        partnerApprovalStatus: newApprovalStatus,
         category: basicInfo.category,
         location: basicInfo.location,
         experience: basicInfo.experience,
@@ -316,6 +325,8 @@ export const applyAsVendor = async (req, res) => {
     }
 
     // Create or update WeddingVendor profile
+    let vendor = await WeddingVendor.findOne({ user: user._id });
+
     const vendorData = {
       user: user._id,
       name: basicInfo.name,
@@ -333,10 +344,9 @@ export const applyAsVendor = async (req, res) => {
         type: 'total'
       },
       services: services?.filter(s => s.name?.trim()) || [],
-      status: 'pending'
+      status: vendor ? vendor.status : 'pending'
     };
 
-    let vendor = await WeddingVendor.findOne({ user: user._id });
     if (vendor) {
       vendor = await WeddingVendor.findOneAndUpdate(
         { user: user._id }, vendorData, { new: true }
@@ -404,10 +414,18 @@ export const getPublicVendors = async (req, res) => {
 
     const vendors = await WeddingVendor.find(filter)
       .populate('destination', 'name location')
+      .populate('user', 'hasActiveSubscription leadsRemaining')
       .sort({ rating: -1, createdAt: -1 });
 
-    console.log(`✅ Found ${vendors.length} vendors`);
-    res.status(200).json(vendors);
+    // Filter out vendors who do not have an active subscription, ran out of leads, or whose subscription expired
+    const activeVendors = vendors.filter(v => {
+      if (!v.user || !v.user.hasActiveSubscription || v.user.leadsRemaining <= 0) return false;
+      if (v.user.subscriptionExpiryDate && new Date(v.user.subscriptionExpiryDate) < new Date()) return false;
+      return true;
+    });
+
+    console.log(`✅ Found ${activeVendors.length} active vendors (filtered from ${vendors.length})`);
+    res.status(200).json(activeVendors);
   } catch (error) {
     console.error('❌ Error in getPublicVendors:', error);
     res.status(500).json({ message: error.message });

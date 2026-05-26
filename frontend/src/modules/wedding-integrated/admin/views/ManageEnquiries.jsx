@@ -3,6 +3,22 @@ import { adminStyles } from '../theme/themeConfig';
 import { Filter, Search, ArrowUpRight, CheckCircle2, Circle, Trash2, Eye, X } from 'lucide-react';
 import { weddingService } from '../../../../services/weddingService';
 
+const formatMessage = (msg, isModal = false) => {
+  if (!msg) return <span className="text-gray-400 italic">No details provided</span>;
+  const match = msg.match(/\[Interested In: (.*?)\](.*)/);
+  if (match) {
+    const packageInfo = match[1].trim();
+    const userMsg = match[2].trim();
+    return (
+      <div className={`flex flex-col ${isModal ? 'gap-2' : 'gap-1'}`}>
+        {packageInfo && <span className={`font-bold ${isModal ? 'text-sm' : 'text-[10px]'} text-[hsl(353,45%,35%)] bg-[hsl(353,45%,35%)]/10 px-2 py-0.5 rounded uppercase tracking-wider w-fit`}>{packageInfo}</span>}
+        {userMsg && <span className={`${isModal ? 'text-base' : 'text-xs line-clamp-2'} text-gray-600 whitespace-pre-wrap leading-snug`}>{userMsg}</span>}
+      </div>
+    );
+  }
+  return <p className={`${isModal ? 'text-base whitespace-pre-wrap' : 'text-xs line-clamp-2 whitespace-normal'} text-gray-600 leading-snug`}>{msg}</p>;
+};
+
 const ManageEnquiries = () => {
   const [statusFilter, setStatusFilter] = useState('New'); // "New" or "Contacted"
   const [enquiries, setEnquiries] = useState([]);
@@ -131,9 +147,9 @@ const ManageEnquiries = () => {
                       <p className="font-bold text-lg text-[hsl(353,20%,15%)]">{enq.name}</p>
                       <p className="text-xs text-gray-400 font-medium tracking-wide">{enq.phone}</p>
                     </td>
-                    <td className="py-6">
-                      <p className="text-sm text-gray-600 font-bold uppercase">{enq.targetType}</p>
-                      <p className="text-xs text-gray-400 truncate w-40">{enq.message}</p>
+                    <td className="py-6 pr-4">
+                      <p className="text-sm text-gray-600 font-bold uppercase mb-1">{enq.targetType}</p>
+                      {formatMessage(enq.message)}
                     </td>
                     <td className="py-6 text-sm font-medium text-gray-700">
                       {enq.weddingDate ? new Date(enq.weddingDate).toLocaleDateString() : 'TBD'}
@@ -246,8 +262,8 @@ const ManageEnquiries = () => {
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-1">Additional Notes / Message</p>
-                  <div className="p-4 bg-gray-50 rounded-2xl text-gray-700 text-sm whitespace-pre-wrap border border-gray-100">
-                    {selectedEnquiry.message || 'No additional notes provided.'}
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    {formatMessage(selectedEnquiry.message, true)}
                   </div>
                 </div>
               </div>

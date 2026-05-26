@@ -15,7 +15,8 @@ import {
   CheckCheck,
   Inbox,
   Sparkles,
-  ChevronLeft
+  ChevronLeft,
+  IndianRupee
 } from "lucide-react";
 import VendorLayout from "../layouts/VendorLayout";
 import { weddingVendorService } from "../../../../../services/apiService";
@@ -124,6 +125,23 @@ const LeadsInbox = () => {
     }
   };
 
+  const handlePaymentReceived = async (id) => {
+    try {
+      await weddingVendorService.markPaymentReceived(id);
+      
+      // Update local state
+      setLeads(prev => prev.map(l => l._id === id ? { ...l, vendorPaymentStatus: 'Received' } : l));
+      if (selectedLead && selectedLead._id === id) {
+        setSelectedLead(prev => ({ ...prev, vendorPaymentStatus: 'Received' }));
+      }
+
+      setToast({ visible: true, message: "Payment marked as Received!", type: "Booked" });
+      setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2800);
+    } catch (error) {
+      console.error("Failed to update payment status", error);
+    }
+  };
+
   const handleDeleteLead = (id) => {
     // Note: We don't have a specific vendor-delete lead yet, usually we just archive/reject
     if (window.confirm("Are you sure you want to archive this lead?")) {
@@ -220,11 +238,12 @@ const LeadsInbox = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <p
-                            className={`text-[10px] font-bold uppercase tracking-widest leading-none ${
+                            className={`text-[10px] font-bold uppercase tracking-widest leading-none flex items-center gap-1 ${
                               isSelected ? "text-white/75" : "text-[#8E7E77]"
                             }`}
                           >
-                            {formatDate(lead.weddingDate)}
+                            <Calendar className="w-3 h-3" />
+                            Event Date: {formatDate(lead.weddingDate)}
                           </p>
                           <span
                             className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 transition-all duration-300 ${
@@ -265,16 +284,21 @@ const LeadsInbox = () => {
                       <div className="flex items-center gap-3 text-[9px] font-bold text-[#8E7E77] uppercase tracking-widest mt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-2.5 h-2.5 text-[#B06A6C]" />
-                          {formatDate(selectedLead.weddingDate)}
+                          <span className="opacity-70">Event Date:</span> {formatDate(selectedLead.weddingDate)}
                         </span>
-                        {selectedLead.budget && (
-                          <span className="font-black text-[#B06A6C]">
-                            {selectedLead.budget}
-                          </span>
+                        {selectedLead.bookingAmount > 0 ? (
+                          <span className="font-black text-[#B06A6C]">Final Booking: ₹{selectedLead.bookingAmount}</span>
+                        ) : (
+                          selectedLead.budget && <span className="font-black text-[#B06A6C]">Budget: {selectedLead.budget}</span>
                         )}
                         {selectedLead.guestCount && (
                           <span className="text-slate-400">
                              • {selectedLead.guestCount} Guests
+                          </span>
+                        )}
+                        {selectedLead.vendorPaymentStatus === 'Received' && (
+                          <span className="font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
+                             <CheckCircle className="w-2.5 h-2.5" /> Payment Received
                           </span>
                         )}
                       </div>
@@ -337,13 +361,7 @@ const LeadsInbox = () => {
                     </div>
                   </div>
 
-                  {/* Response Probability */}
-                  <div className="ml-11 flex items-center gap-2">
-                    <TrendingUp className="w-3 h-3 text-emerald-500" />
-                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                      Response Probability: {selectedLead.probability}%
-                    </span>
-                  </div>
+
                 </div>
 
                 {/* Status Action Buttons */}
@@ -396,6 +414,23 @@ const LeadsInbox = () => {
                       </button>
                     )}
                   </div>
+
+                  {currentStatus === "Booked" && selectedLead.vendorPaymentStatus !== "Received" && (
+                     <button
+                       onClick={() => handlePaymentReceived(selectedLead._id)}
+                       className="w-full py-3 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 transition-all duration-300 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-2 border-emerald-300 active:scale-95"
+                     >
+                       <IndianRupee className="w-3.5 h-3.5" />
+                       Mark Payment Received
+                     </button>
+                  )}
+
+                  {currentStatus === "Booked" && selectedLead.vendorPaymentStatus === "Received" && (
+                     <div className="w-full py-3 rounded-xl text-[11px] font-black flex items-center justify-center gap-1.5 bg-slate-50 text-emerald-600 border-2 border-emerald-100">
+                       <CheckCheck className="w-3.5 h-3.5" />
+                       Payment Received Successfully
+                     </div>
+                  )}
 
                   {/* WhatsApp + Archive */}
                   <div className="flex items-center gap-2">
@@ -459,9 +494,18 @@ const LeadsInbox = () => {
                       <div className="flex items-center gap-3 text-[9px] font-bold text-[#8E7E77] uppercase tracking-widest mt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-2.5 h-2.5 text-[#B06A6C]" />
-                          {formatDate(selectedLead.weddingDate)}
+                          <span className="opacity-70">Event Date:</span> {formatDate(selectedLead.weddingDate)}
                         </span>
-                        {selectedLead.budget && <span className="font-black text-[#B06A6C]">{selectedLead.budget}</span>}
+                        {selectedLead.bookingAmount > 0 ? (
+                          <span className="font-black text-[#B06A6C]">Final Booking: ₹{selectedLead.bookingAmount}</span>
+                        ) : (
+                          selectedLead.budget && <span className="font-black text-[#B06A6C]">Budget: {selectedLead.budget}</span>
+                        )}
+                        {selectedLead.vendorPaymentStatus === 'Received' && (
+                          <span className="font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
+                             <CheckCircle className="w-2.5 h-2.5" /> Received
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -535,6 +579,16 @@ const LeadsInbox = () => {
                             </button>
                           )}
                         </>
+                      )}
+                      {currentStatus === "Booked" && selectedLead.vendorPaymentStatus !== "Received" && (
+                         <button onClick={() => handlePaymentReceived(selectedLead._id)} className="w-full py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-emerald-100 text-emerald-700 border-2 border-emerald-300 transition-all hover:bg-emerald-200">
+                           <IndianRupee className="w-4 h-4" /> Mark Payment Received
+                         </button>
+                      )}
+                      {currentStatus === "Booked" && selectedLead.vendorPaymentStatus === "Received" && (
+                         <div className="w-full py-4 rounded-xl text-[12px] font-black flex items-center justify-center gap-2 bg-slate-50 text-emerald-600 border-2 border-emerald-100">
+                           <CheckCheck className="w-4 h-4" /> Payment Received
+                         </div>
                       )}
                    </div>
                    <button className="w-full py-4 bg-[#4A3730] text-white font-black text-[11px] rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-[#4A3730]/20 hover:scale-[1.02] active:scale-95 transition-all">

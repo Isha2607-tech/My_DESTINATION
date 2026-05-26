@@ -151,6 +151,7 @@ const VendorDetailPage = () => {
 
       const payload = {
         ...formData,
+        eventDate: formData.date,
         message: `[Interested In: ${formData.packageType}]\n\n${formData.message || "Please share more details."}`,
         targetType: vendor.isVenue || vendor.capacity ? "Venue" : "Vendor",
         targetId: vendor._id
@@ -380,6 +381,21 @@ const VendorDetailPage = () => {
               <input type="text" placeholder="Your Name" required className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               <input type="email" placeholder="Email Address" required className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
               <input type="text" placeholder="Phone Number" required className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+              <div className="relative">
+                <input 
+                  type="date" 
+                  required 
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-4 py-3 bg-slate-50 rounded-xl text-sm border-none focus:ring-1 focus:ring-primary text-slate-600" 
+                  value={formData.date} 
+                  onChange={e => setFormData({...formData, date: e.target.value})} 
+                />
+                {!formData.date && (
+                  <div className="absolute top-1/2 left-4 -translate-y-1/2 text-sm text-slate-400 pointer-events-none bg-slate-50 right-10">
+                    Event Date
+                  </div>
+                )}
+              </div>
               <button type="submit" disabled={submitting} className="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all disabled:opacity-50">
                 {submitting ? "Sending..." : "Send Message"}
               </button>

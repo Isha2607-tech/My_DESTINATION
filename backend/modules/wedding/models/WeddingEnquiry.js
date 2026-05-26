@@ -15,7 +15,11 @@ const weddingEnquirySchema = new mongoose.Schema({
   targetType: { type: String, enum: ['Venue', 'Vendor', 'General'], default: 'General' },
   targetId: { type: mongoose.Schema.Types.ObjectId, refPath: 'targetType' }, // Dynamic ref
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  status: { type: String, enum: ['New', 'Contacted', 'Booked', 'Lost'], default: 'New' }
+  status: { type: String, enum: ['New', 'Contacted', 'Booked', 'Lost'], default: 'New' },
+  paymentStatus: { type: String, enum: ['Pending', 'Paid'], default: 'Pending' },
+  vendorPaymentStatus: { type: String, enum: ['Pending', 'Received'], default: 'Pending' },
+  platformFee: { type: Number, default: 499 },
+  bookingAmount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model('WeddingEnquiry', weddingEnquirySchema);

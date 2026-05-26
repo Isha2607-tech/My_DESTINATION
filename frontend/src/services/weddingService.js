@@ -57,6 +57,42 @@ export const weddingService = {
   },
 
   // Admin Services
+  getAdminSubscriptions: async () => {
+    try {
+      const response = await api.get('/wedding/admin/subscriptions');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  createSubscriptionPlan: async (data) => {
+    try {
+      const response = await api.post('/wedding/admin/subscriptions', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  updateSubscriptionPlan: async (id, data) => {
+    try {
+      const response = await api.patch(`/wedding/admin/subscriptions/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+  
+  deleteSubscriptionPlan: async (id) => {
+    try {
+      const response = await api.delete(`/wedding/admin/subscriptions/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   getAdminStats: async () => {
     try {
       const response = await api.get('/wedding/admin/stats');
@@ -273,6 +309,24 @@ export const weddingService = {
     }
   },
 
+  getPlatformSettings: async () => {
+    try {
+      const response = await api.get('/wedding/admin/settings/financial');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updatePlatformSettings: async (data) => {
+    try {
+      const response = await api.patch('/wedding/admin/settings/financial', data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
   // Vendor Venue Methods
   createVendorVenue: async (data) => {
     try {
@@ -413,6 +467,44 @@ export const weddingService = {
   getTicketById: async (ticketId) => {
     try {
       const response = await api.get(`/wedding/support/${ticketId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Vendor Subscription Methods
+  getActiveSubscriptions: async () => {
+    try {
+      const response = await api.get('/wedding/subscriptions');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  purchaseSubscription: async (planId, paymentId) => {
+    try {
+      const response = await api.post('/wedding/vendor/subscriptions/purchase', { planId, paymentId });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Vendor Wallet Methods
+  getVendorWallet: async () => {
+    try {
+      const response = await api.get('/wedding/vendor/wallet');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  addMoneyToWallet: async (amount, paymentId) => {
+    try {
+      const response = await api.post('/wedding/vendor/wallet/add', { amount, paymentId });
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

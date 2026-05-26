@@ -27,7 +27,8 @@ import {
   TrendingUp,
   Sparkles,
   Check,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from "lucide-react";
 import VendorLayout from "../layouts/VendorLayout";
 import { useAuth } from "../../context/AuthContext";
@@ -50,6 +51,7 @@ const ProfileEditor = () => {
   // New states for Album Form
   const [showAlbumForm, setShowAlbumForm] = useState(false);
   const [albumForm, setAlbumForm] = useState({ name: "", location: "", description: "" });
+  const [isSaving, setIsSaving] = useState(false);
   
   // Update tab if location state changes
   useEffect(() => {
@@ -223,6 +225,7 @@ const ProfileEditor = () => {
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const dataToSave = { ...vendorData, ownerId: user?.id };
       
@@ -272,6 +275,8 @@ const ProfileEditor = () => {
       setTimeout(() => setShowToast(false), 3000);
     } catch (e) {
       alert("Storage limit reached or failed to save to server.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -626,8 +631,9 @@ const ProfileEditor = () => {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <button onClick={handleSave} className="flex-1 bg-primary text-white font-black uppercase text-[10px] py-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
-                        <Save className="w-4 h-4" /> Save
+                      <button onClick={handleSave} disabled={isSaving} className="flex-1 bg-primary text-white font-black uppercase text-[10px] py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 transition-opacity">
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
+                        {isSaving ? 'Saving...' : 'Save'}
                       </button>
                       <button onClick={() => setActiveTab("Price")} className="px-6 bg-white border border-[#F3E9E2] text-[#8E7E77] font-black uppercase text-[10px] py-4 rounded-xl">Back</button>
                     </div>

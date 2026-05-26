@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCategories } from "../../data/categoryApi";
 import { useAuth } from "../../context/AuthContext";
-import { Loader2, ArrowRight, ChevronDown } from "lucide-react";
+import { Loader2, ArrowRight, ChevronDown, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   Select,
@@ -19,6 +19,7 @@ const VendorSignup = () => {
   
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -27,6 +28,7 @@ const VendorSignup = () => {
     password: "",
     category: "",
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -46,9 +48,37 @@ const VendorSignup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === "name" && !/^[a-zA-Z\s]*$/.test(value)) {
       return;
     }
+
+    if (name === "phone") {
+      // Only allow numbers
+      if (value && !/^\d*$/.test(value)) return;
+
+      if (value.length > 10) {
+        toast.error("Phone number cannot exceed 10 digits", { id: "phone_max" });
+        return;
+      }
+
+      if (value.length > 0 && value.length < 10) {
+        setErrors(prev => ({ ...prev, phone: "Phone number must be exactly 10 digits" }));
+      } else {
+        setErrors(prev => { const newErr = {...prev}; delete newErr.phone; return newErr; });
+      }
+    }
+
+    if (name === "email") {
+      // Strictly allow only specified TLDs (.com, .in, .co.in, .org, .net, .edu, .gov, .co, .io, .me)
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|co\.in|org|net|edu|gov|co|io|me)$/i;
+      if (value && !emailRegex.test(value)) {
+        setErrors(prev => ({ ...prev, email: "Please enter a valid email address (e.g. abhi@gmail.com, careers@tech.io)" }));
+      } else {
+        setErrors(prev => { const newErr = {...prev}; delete newErr.email; return newErr; });
+      }
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -56,6 +86,19 @@ const VendorSignup = () => {
     e.preventDefault();
     if (Object.values(formData).some((v) => !v.trim())) {
       toast.error("All fields are required.");
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in|co\.in|org|net|edu|gov|co|io|me)$/i;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address.");
+      setErrors(prev => ({ ...prev, email: "Please enter a valid email address" }));
+      return;
+    }
+    
+    if (formData.phone.length !== 10) {
+      toast.error("Please enter a valid 10-digit phone number.");
+      setErrors(prev => ({ ...prev, phone: "Phone number must be exactly 10 digits" }));
       return;
     }
 
@@ -107,27 +150,45 @@ const VendorSignup = () => {
                 required
               />
             </div>
-            <div>
+             <div>
               <input
                 type="email"
                 name="email"
                 placeholder="Email Address"
                 value={formData.email}
                 onChange={handleChange}
-                className={inputClass}
+                className={`w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                  errors.email 
+                    ? 'border border-red-500 ring-2 ring-red-200 bg-red-50 text-red-900 focus:ring-red-500' 
+                    : 'bg-muted border border-border text-foreground focus:ring-primary/50'
+                }`}
                 required
               />
+              {errors.email && (
+                <p className="text-xs text-red-500 font-bold mt-1.5 ml-1 animate-pulse">
+                  ⚠️ {errors.email}
+                </p>
+              )}
             </div>
             <div>
               <input
                 type="tel"
                 name="phone"
-                placeholder="Phone Number"
+                placeholder="Phone Number (10 Digits)"
                 value={formData.phone}
                 onChange={handleChange}
-                className={inputClass}
+                className={`w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                  errors.phone 
+                    ? 'border border-red-500 ring-2 ring-red-200 bg-red-50 text-red-900 focus:ring-red-500' 
+                    : 'bg-muted border border-border text-foreground focus:ring-primary/50'
+                }`}
                 required
               />
+              {errors.phone && (
+                <p className="text-xs text-red-500 font-bold mt-1.5 ml-1 animate-pulse">
+                  ⚠️ {errors.phone}
+                </p>
+              )}
             </div>
             <div>
               <div className="relative">
@@ -157,17 +218,24 @@ const VendorSignup = () => {
                 )}
               </div>
             </div>
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className={inputClass}
+                className={`${inputClass} pr-10`}
                 required
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
 
             <button

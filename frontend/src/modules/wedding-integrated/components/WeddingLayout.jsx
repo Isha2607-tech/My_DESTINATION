@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Heart, Home, MapPin, Users, MessageSquare, Menu, X, User, Bell, HelpCircle, Calendar, Settings, LogOut, ChevronRight, LogIn, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import logoImg from "../assets/logo.png";
 import { weddingService } from "../../../services/weddingService";
@@ -65,7 +66,7 @@ const WeddingLayout = () => {
   const [footerCategories, setFooterCategories] = useState([]);
   const [dynamicMegaMenu, setDynamicMegaMenu] = useState([[], [], [], []]);
 
-  // Lock body scroll when mobile sidebar is open
+  // Handle touch interactions for mobile sidebar if needed
   useEffect(() => {
     const handleTouchMove = (e) => {
       if (!mobileSidebarOpen) return;
@@ -79,17 +80,10 @@ const WeddingLayout = () => {
     };
 
     if (mobileSidebarOpen) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    } else {
-      document.body.style.overflow = "unset";
-      document.documentElement.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = "unset";
-      document.documentElement.style.overflow = "unset";
       document.removeEventListener('touchmove', handleTouchMove);
     };
   }, [mobileSidebarOpen]);
@@ -349,7 +343,8 @@ const WeddingLayout = () => {
       )}
 
       {/* Main Sidebar (Desktop & Mobile) */}
-      <div className={`fixed inset-0 z-[10000] overflow-hidden ${mobileSidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
+      {createPortal(
+        <div className={`fixed inset-0 z-[10000] ${mobileSidebarOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
         {/* Backdrop */}
         <div 
           className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ${mobileSidebarOpen ? "opacity-100" : "opacity-0"}`}
@@ -357,7 +352,7 @@ const WeddingLayout = () => {
           style={{ touchAction: 'none' }}
         />
         {/* Sidebar */}
-        <div id="mobile-sidebar-container" className={`absolute top-0 left-0 h-full w-[280px] sm:w-[320px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div id="mobile-sidebar-container" className={`absolute top-0 left-0 h-[100dvh] w-[280px] sm:w-[320px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out overscroll-contain ${mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="p-5 pt-8 border-b border-slate-100 flex items-start justify-between shrink-0">
             <div className="flex flex-col gap-3">
               {user ? (
@@ -384,7 +379,7 @@ const WeddingLayout = () => {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto py-4 px-4 space-y-2 no-scrollbar" style={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "none" }}>
+          <div className="flex-1 min-h-0 overflow-y-auto py-4 px-4 space-y-2 wedding-sidebar-scrollbar overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
             {navLinks.map(link => (
               <div key={link.to}>
                 <Link 
@@ -486,7 +481,7 @@ const WeddingLayout = () => {
             )}
           </div>
         </div>
-      </div>
+      </div>, document.body)}
 
 
 

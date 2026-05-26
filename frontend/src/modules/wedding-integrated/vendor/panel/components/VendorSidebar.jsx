@@ -11,7 +11,9 @@ import {
   X,
   LogOut,
   Eye,
-  Building2
+  Building2,
+  Wallet,
+  CreditCard
 } from "lucide-react";
 
 const allNavItems = [
@@ -20,6 +22,8 @@ const allNavItems = [
   { id: "add-venue", label: "Add Venue", icon: Building2, path: "/wedding/vendor/venues/add", venueOnly: true },
   { id: "my-venues", label: "My Venues", icon: Building2, path: "/wedding/vendor/venues/my", venueOnly: true },
   { id: "leads", label: "Enquiry Inbox", icon: MessageSquare, path: "/wedding/vendor/leads", venueOnly: false },
+  { id: "wallet", label: "My Wallet", icon: Wallet, path: "/wedding/vendor/wallet", venueOnly: false },
+  { id: "subscription", label: "My Subscription", icon: CreditCard, path: "/wedding/vendor/subscription", venueOnly: false },
   { id: "reviews", label: "Client Love", icon: Star, path: "/wedding/vendor/reviews", venueOnly: false },
   { id: "settings", label: "Vendor Settings", icon: Settings, path: "/wedding/vendor/settings", venueOnly: false },
 ];

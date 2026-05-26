@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { weddingService } from '../../../../services/weddingService';
 import { adminStyles } from '../theme/themeConfig';
+import toast from 'react-hot-toast';
 import {
   Users,
   Clock,
@@ -29,6 +30,13 @@ const ManageVendors = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
 
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    vendorId: null,
+    status: '',
+  });
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -49,16 +57,24 @@ const ManageVendors = () => {
     }
   };
 
+  const triggerActionConfirm = (id, status) => {
+    setConfirmModal({
+      isOpen: true,
+      vendorId: id,
+      status: status,
+    });
+  };
+
   const handleAction = async (id, status) => {
     try {
       setLoading(true);
       const statusValue = status === 'Approved' ? 'approved' : 'rejected';
       await weddingService.updateVendorStatus(id, statusValue);
-      alert(`Vendor ${status} successfully!`);
+      toast.success(`Vendor ${status} successfully!`);
       if (selectedVendor?._id === id) setSelectedVendor(null);
       fetchData();
     } catch (error) {
-      alert('Failed to update vendor status');
+      toast.error('Failed to update vendor status');
     } finally {
       setLoading(false);
     }
@@ -67,7 +83,7 @@ const ManageVendors = () => {
   // Export to CSV Handler
   const handleExport = () => {
     if (filteredVendors.length === 0) {
-      alert("No data to export!");
+      toast.error("No data to export!");
       return;
     }
     const headers = ["Name", "Email", "Phone", "Category", "Location", "Experience (Years)", "Base Package", "Premium Package", "Status"];
@@ -276,13 +292,13 @@ const ManageVendors = () => {
                           {isPendingView && (
                             <>
                               <button
-                                onClick={() => handleAction(vendor._id, 'Rejected')}
+                                onClick={() => triggerActionConfirm(vendor._id, 'Rejected')}
                                 className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors"
                               >
                                 Reject
                               </button>
                               <button
-                                onClick={() => handleAction(vendor._id, 'Approved')}
+                                onClick={() => triggerActionConfirm(vendor._id, 'Approved')}
                                 className="px-6 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 shadow-md shadow-green-200 transition-all active:scale-95"
                               >
                                 Approve
@@ -463,13 +479,13 @@ const ManageVendors = () => {
             {selectedVendor.partnerApprovalStatus === 'pending' && (
               <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
                 <button
-                  onClick={() => handleAction(selectedVendor._id, 'Rejected')}
+                  onClick={() => triggerActionConfirm(selectedVendor._id, 'Rejected')}
                   className="flex-1 py-4 bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-300 transition-all"
                 >
                   Reject Application
                 </button>
                 <button
-                  onClick={() => handleAction(selectedVendor._id, 'Approved')}
+                  onClick={() => triggerActionConfirm(selectedVendor._id, 'Approved')}
                   className="flex-1 py-4 bg-green-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-green-200 hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   Approve Vendor
@@ -480,7 +496,56 @@ const ManageVendors = () => {
         </div>,
         document.body
       )}
+      <ConfirmationModal
+        confirmModal={confirmModal}
+        setConfirmModal={setConfirmModal}
+        handleAction={handleAction}
+      />
     </>
+  );
+};
+
+// Render Confirmation Modal helper inside ManageVendors
+const ConfirmationModal = ({ confirmModal, setConfirmModal, handleAction }) => {
+  if (!confirmModal.isOpen) return null;
+  
+  return createPortal(
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-[#4A3730]/40 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={() => setConfirmModal({ isOpen: false, vendorId: null, status: '' })}
+      />
+      <div className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl p-6 overflow-hidden animate-in zoom-in-95 duration-200 z-[100001] border border-[#F3E9E2]">
+        <h3 className="text-xl font-serif text-[hsl(353,45%,35%)] font-bold mb-2">
+          {confirmModal.status === 'Approved' ? 'Approve Vendor?' : 'Reject Vendor?'}
+        </h3>
+        <p className="text-gray-500 text-sm mb-6">
+          Are you sure you want to {confirmModal.status === 'Approved' ? 'approve' : 'reject'} this vendor application? This action will update their access instantly.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={() => setConfirmModal({ isOpen: false, vendorId: null, status: '' })}
+            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+          >
+            No, Cancel
+          </button>
+          <button
+            onClick={() => {
+              handleAction(confirmModal.vendorId, confirmModal.status);
+              setConfirmModal({ isOpen: false, vendorId: null, status: '' });
+            }}
+            className={`px-5 py-2.5 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 ${
+              confirmModal.status === 'Approved'
+                ? 'bg-green-600 hover:bg-green-700 shadow-green-200'
+                : 'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
+            }`}
+          >
+            Yes, Proceed
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 

@@ -21,8 +21,8 @@ const ManageFinancials = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await weddingService.getAdminFinancials();
-        setData(response);
+        const financialResponse = await weddingService.getAdminFinancials();
+        setData(financialResponse);
       } catch (err) {
         console.error('Error fetching financials:', err);
         setError(err.message || 'Failed to fetch financial data');
@@ -61,9 +61,12 @@ const ManageFinancials = () => {
   const financials = data || {
     totalRevenue: '₹0 L',
     commissionsEarned: '₹0 L',
+    platformFeesEarned: '₹0 L',
     pendingPayouts: '₹0 L',
     netProfit: '₹0 L',
-    recentTransactions: []
+    subscriptionRevenue: '₹0 L',
+    recentTransactions: [],
+    recentSubscriptions: []
   };
 
   return (
@@ -86,12 +89,14 @@ const ManageFinancials = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
          {[
-           { label: 'Total Revenue', value: financials.totalRevenue, icon: TrendingUp, color: 'bg-blue-50 text-blue-600', trend: '+0%' },
-           { label: 'Commissions', value: financials.commissionsEarned, icon: IndianRupee, color: 'bg-green-50 text-green-600', trend: '+0%' },
-           { label: 'Pending Payouts', value: financials.pendingPayouts, icon: CreditCard, color: 'bg-orange-50 text-orange-600', trend: 'Requires attention' },
-           { label: 'Net Profit', value: financials.netProfit, icon: ArrowUpRight, color: 'bg-purple-50 text-purple-600', trend: '+0%' },
+           { label: 'Booking Revenue', value: financials.totalRevenue, icon: TrendingUp, color: 'bg-blue-50 text-blue-600', trend: '+0%' },
+           { label: 'Platform Fee (User)', value: financials.platformFeesEarned || '₹0', icon: IndianRupee, color: 'bg-teal-50 text-teal-600', trend: '+0%' },
+           { label: 'Vendor Commission', value: financials.commissionsEarned, icon: IndianRupee, color: 'bg-purple-50 text-purple-600', trend: '+0%' },
+           { label: 'Subscription Revenue', value: financials.subscriptionRevenue || '₹0', icon: CreditCard, color: 'bg-indigo-50 text-indigo-600', trend: '+0%' },
+           { label: 'Pending Payouts', value: financials.pendingPayouts, icon: AlertCircle, color: 'bg-orange-50 text-orange-600', trend: 'Requires attention' },
+           { label: 'Net Profit', value: financials.netProfit, icon: ArrowUpRight, color: 'bg-green-50 text-green-600', trend: '+0%' },
          ].map((stat, i) => (
            <div key={i} className={`${adminStyles.glassCard} p-6 rounded-3xl group hover:shadow-xl transition-all duration-300`}>
               <div className="flex justify-between items-start mb-4">
@@ -110,9 +115,9 @@ const ManageFinancials = () => {
          ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8">
          {/* Recent Transactions */}
-         <div className={`${adminStyles.glassCard} lg:col-span-2 p-8 rounded-3xl`}>
+         <div className={`${adminStyles.glassCard} p-8 rounded-3xl`}>
             <div className="flex items-center justify-between mb-8">
                <h3 className={`${adminStyles.heading} text-xl font-bold`}>Recent Transactions</h3>
                <button className="text-sm font-bold text-[hsl(353,45%,35%)] hover:underline">View All History</button>
@@ -164,38 +169,57 @@ const ManageFinancials = () => {
             </div>
          </div>
 
-         {/* Commission Settings */}
-         <div className={`${adminStyles.glassCard} p-8 rounded-3xl h-fit space-y-6`}>
-            <div className="flex items-center gap-3 text-[hsl(353,45%,35%)] mb-4">
-               <AlertCircle size={24} />
-               <h3 className="text-xl font-bold">Commission Policy</h3>
+         {/* Recent Subscriptions */}
+         <div className={`${adminStyles.glassCard} p-8 rounded-3xl`}>
+            <div className="flex items-center justify-between mb-8">
+               <h3 className={`${adminStyles.heading} text-xl font-bold`}>Subscription Purchases</h3>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">
-               Set the standard platform fee for all wedding service bookings. This percentage is automatically deducted from the total booking value.
-            </p>
-            <div className="space-y-4 pt-4">
-               <div>
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">Global Percentage</label>
-                  <div className="flex items-center gap-4">
-                     <div className="relative flex-1">
-                        <input 
-                           type="number" 
-                           defaultValue="10"
-                           className="w-full px-4 py-3 bg-white border border-[#B06A6C]/20 rounded-xl text-lg font-black focus:outline-none focus:ring-2 focus:ring-[#B06A6C]/20"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-slate-400">%</span>
-                     </div>
-                     <button className="px-6 py-3 bg-[hsl(353,45%,35%)] text-white rounded-xl text-sm font-bold shadow-lg active:scale-95 transition-all">
-                        Update
-                     </button>
-                  </div>
-               </div>
-               <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                  <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Impact Analysis</p>
-                  <p className="text-xs text-blue-800">
-                     Increasing commission beyond 15% may affect vendor retention but increases short-term platform yield.
-                  </p>
-               </div>
+            <div className="overflow-x-auto">
+               <table className="w-full text-left">
+                  <thead>
+                     <tr className="border-b border-[hsl(353,45%,35%)]/10">
+                        <th className="pb-4 font-bold text-gray-400 text-[10px] uppercase tracking-widest">Transaction / Date</th>
+                        <th className="pb-4 font-bold text-gray-400 text-[10px] uppercase tracking-widest">Vendor</th>
+                        <th className="pb-4 font-bold text-gray-400 text-[10px] uppercase tracking-widest">Plan Name</th>
+                        <th className="pb-4 font-bold text-gray-400 text-[10px] uppercase tracking-widest">Revenue</th>
+                        <th className="pb-4 font-bold text-gray-400 text-[10px] uppercase tracking-widest text-right">Status</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[hsl(353,45%,35%)]/5">
+                     {financials.recentSubscriptions?.length > 0 ? financials.recentSubscriptions.map((sub) => (
+                       <tr key={sub.id} className="group hover:bg-white/40 transition-all duration-300">
+                          <td className="py-5">
+                             <p className="font-bold text-sm text-[hsl(353,20%,15%)]">{sub.id.substring(0, 8)}...</p>
+                             <p className="text-xs text-gray-400">{sub.date}</p>
+                          </td>
+                          <td className="py-5">
+                             <p className="font-bold text-sm text-gray-700">{sub.vendor}</p>
+                          </td>
+                          <td className="py-5">
+                             <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-xs font-bold">{sub.plan}</span>
+                          </td>
+                          <td className="py-5">
+                             <p className="font-black text-sm text-green-600">{sub.amount}</p>
+                          </td>
+                          <td className="py-5 text-right">
+                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                sub.status === 'Paid' 
+                                  ? 'bg-green-50 text-green-600' 
+                                  : 'bg-orange-50 text-orange-600'
+                             }`}>
+                                {sub.status}
+                             </span>
+                          </td>
+                       </tr>
+                     )) : (
+                       <tr>
+                         <td colSpan="5" className="py-10 text-center text-gray-500 font-medium">
+                           No subscription transactions recorded yet.
+                         </td>
+                       </tr>
+                     )}
+                  </tbody>
+               </table>
             </div>
          </div>
       </div>

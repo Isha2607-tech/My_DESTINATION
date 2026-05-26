@@ -160,6 +160,8 @@ const WeddingAdminSettings = React.lazy(() => import('./modules/wedding-integrat
 const WeddingManageSupport = React.lazy(() => import('./modules/wedding-integrated/admin/views/ManageSupport'));
 const WeddingManageCategories = React.lazy(() => import('./modules/wedding-integrated/admin/views/ManageCategories'));
 const WeddingManageTestimonials = React.lazy(() => import('./modules/wedding-integrated/admin/views/ManageTestimonials'));
+const WeddingManageSubscriptions = React.lazy(() => import('./modules/wedding-integrated/admin/views/ManageSubscriptions'));
+const WeddingAdminFinancialSettings = React.lazy(() => import('./modules/wedding-integrated/admin/views/AdminFinancialSettings'));
 
 // Lazy Imports - Wedding Vendor Module
 const WeddingVendorOnboardingLayout = React.lazy(() => import('./modules/wedding-integrated/vendor/components/VendorOnboardingLayout'));
@@ -180,8 +182,10 @@ const WeddingVendorReviewsManager = React.lazy(() => import('./modules/wedding-i
 const WeddingVendorSettings = React.lazy(() => import('./modules/wedding-integrated/vendor/panel/views/VendorSettings'));
 const WeddingVendorMyVenues = React.lazy(() => import('./modules/wedding-integrated/vendor/panel/views/MyVenues'));
 const WeddingVendorAddVenue = React.lazy(() => import('./modules/wedding-integrated/vendor/panel/views/AddVenue'));
+const WeddingVendorWallet = React.lazy(() => import('./modules/wedding-integrated/vendor/panel/views/VendorWallet'));
 const WeddingVendorAuthLogin = React.lazy(() => import('./modules/wedding-integrated/vendor/auth/views/VendorLogin'));
 const WeddingVendorAuthSignup = React.lazy(() => import('./modules/wedding-integrated/vendor/auth/views/VendorSignup'));
+const WeddingVendorSubscription = React.lazy(() => import('./modules/wedding-integrated/vendor/panel/views/VendorSubscription'));
 const TaxiApp = React.lazy(() => import('./modules/taxi/TaxiApp'));
 
 // Loading Fallback Component
@@ -443,6 +447,20 @@ const WeddingVendorProtectedRoute = ({ children }) => {
   // If vendor is rejected, block them
   if (user.partnerApprovalStatus === 'rejected') {
     return <Navigate to="/wedding/vendor/pending-approval" replace />;
+  }
+
+  // --- STRICT SUBSCRIPTION LOGIC ---
+  const isSubscriptionRoute = location.pathname.includes('/wedding/vendor/subscription');
+  
+  // Only approved vendors require a subscription. 
+  // Check both boolean flag AND expiry date to ensure true strict enforcement
+  let hasActiveSubscription = user?.hasActiveSubscription === true;
+  if (user?.subscriptionExpiryDate && new Date(user.subscriptionExpiryDate) < new Date()) {
+    hasActiveSubscription = false;
+  }
+  
+  if (user.partnerApprovalStatus === 'approved' && !hasActiveSubscription && !isSubscriptionRoute) {
+    return <Navigate to="/wedding/vendor/subscription" replace />;
   }
 
   // Allow 'approved' and 'pending' vendors to access their dashboard
@@ -758,12 +776,14 @@ function App() {
               <Route path="financials" element={<WeddingManageFinancials />} />
               <Route path="destinations" element={<WeddingManageDestinations />} />
               <Route path="venues" element={<WeddingManageVenues />} />
+              <Route path="subscriptions" element={<WeddingManageSubscriptions />} />
               <Route path="categories" element={<WeddingManageCategories />} />
               <Route path="testimonials" element={<WeddingManageTestimonials />} />
               <Route path="gallery" element={<WeddingManageRealWeddings />} />
               <Route path="support" element={<WeddingManageSupport />} />
               <Route path="profile" element={<WeddingAdminProfile />} />
               <Route path="settings/*" element={<WeddingAdminSettings />} />
+              <Route path="settings/financial" element={<WeddingAdminFinancialSettings />} />
             </Route>
 
             {/* Wedding Vendor Module Routes */}
@@ -791,9 +811,12 @@ function App() {
                   <Route path="work" element={<WeddingVendorWorkManager />} />
                   <Route path="leads" element={<WeddingVendorLeadsInbox />} />
                   <Route path="reviews" element={<WeddingVendorReviewsManager />} />
+                  <Route path="wallet" element={<WeddingVendorWallet />} />
                   <Route path="settings" element={<WeddingVendorSettings />} />
                   <Route path="venues/my" element={<WeddingVendorMyVenues />} />
                   <Route path="venues/add" element={<WeddingVendorAddVenue />} />
+                  {/* Subscription inside layout so sidebar is visible */}
+                  <Route path="subscription" element={<WeddingVendorSubscription />} />
                 </Route>
               </Route>
             </Route>

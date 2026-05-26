@@ -1,6 +1,7 @@
 import WeddingVenue from '../models/WeddingVenue.js';
 import WeddingVendor from '../models/WeddingVendor.js';
 import WeddingEnquiry from '../models/WeddingEnquiry.js';
+import WeddingSubscriptionTransaction from '../models/WeddingSubscriptionTransaction.js';
 import User from '../../user/models/User.js';
 import Admin from '../../admin/models/Admin.js';
 import bcrypt from 'bcryptjs';
@@ -210,30 +211,63 @@ export const getAdminFinancials = async (req, res) => {
       .populate('user', 'name email')
       .sort({ updatedAt: -1 });
 
-    const totalRevenue = bookedEnquiries.reduce((acc, curr) => acc + (curr.actualAmount || 0), 0);
+    const subscriptionTransactions = await WeddingSubscriptionTransaction.find({ status: 'Paid' })
+      .populate('vendor', 'name email')
+      .populate('plan', 'planName')
+      .sort({ createdAt: -1 });
+
+    const totalRevenueEnquiries = bookedEnquiries.reduce((acc, curr) => acc + (curr.actualAmount || 0), 0);
     const commissionsEarned = bookedEnquiries.reduce((acc, curr) => acc + (curr.commissionAmount || 0), 0);
+    const platformFeesEarned = bookedEnquiries.reduce((acc, curr) => acc + (curr.platformFee || 0), 0);
+    
+    const totalRevenueSubscriptions = subscriptionTransactions.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+
+    const totalRevenue = totalRevenueEnquiries + totalRevenueSubscriptions;
     
     // For now, let's assume pending payouts and net profit are derived
-    const pendingPayouts = totalRevenue - commissionsEarned; 
-    const netProfit = commissionsEarned; // Simplified
+    const pendingPayouts = totalRevenueEnquiries - commissionsEarned; 
+    const netProfit = commissionsEarned + platformFeesEarned + totalRevenueSubscriptions; // Simplified
+
+    // Fetch target information manually since targetId is polymorphic and may not populate correctly
+    for (let enq of bookedEnquiries) {
+      if (enq.targetType === 'Venue' || enq.targetType === 'venue') {
+        enq.targetInfo = await WeddingVenue.findById(enq.targetId).select('propertyName name').lean();
+      } else if (enq.targetId) {
+        enq.targetInfo = await WeddingVendor.findById(enq.targetId).select('name').lean();
+      }
+    }
 
     const recentTransactions = bookedEnquiries.map(enq => ({
       id: enq._id,
-      vendor: enq.targetId?.propertyName || enq.targetId?.name || 'N/A',
+      vendor: enq.targetInfo?.propertyName || enq.targetInfo?.name || 'N/A',
       client: enq.name || enq.user?.name || 'N/A',
       amount: `₹${enq.actualAmount?.toLocaleString('en-IN')}`,
       commission: `₹${enq.commissionAmount?.toLocaleString('en-IN')}`,
       date: new Date(enq.updatedAt).toLocaleDateString(),
-      status: 'Paid' // Placeholder
+      status: 'Paid',
+      type: 'Booking Fee'
+    }));
+
+    const recentSubscriptions = subscriptionTransactions.map(sub => ({
+      id: sub._id,
+      vendor: sub.vendor?.name || 'N/A',
+      plan: sub.plan?.planName || 'N/A',
+      amount: `₹${sub.amount?.toLocaleString('en-IN')}`,
+      date: new Date(sub.createdAt).toLocaleDateString(),
+      status: sub.status,
+      type: 'Subscription'
     }));
 
     res.status(200).json({
       success: true,
-      totalRevenue: `₹${(totalRevenue / 100000).toFixed(1)} L`,
-      commissionsEarned: `₹${(commissionsEarned / 100000).toFixed(1)} L`,
-      pendingPayouts: `₹${(pendingPayouts / 100000).toFixed(1)} L`,
-      netProfit: `₹${(netProfit / 100000).toFixed(1)} L`,
-      recentTransactions
+      totalRevenue: `₹${totalRevenue.toLocaleString('en-IN')}`,
+      commissionsEarned: `₹${commissionsEarned.toLocaleString('en-IN')}`,
+      platformFeesEarned: `₹${platformFeesEarned.toLocaleString('en-IN')}`,
+      subscriptionRevenue: `₹${totalRevenueSubscriptions.toLocaleString('en-IN')}`,
+      pendingPayouts: `₹${pendingPayouts.toLocaleString('en-IN')}`,
+      netProfit: `₹${netProfit.toLocaleString('en-IN')}`,
+      recentTransactions,
+      recentSubscriptions
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
