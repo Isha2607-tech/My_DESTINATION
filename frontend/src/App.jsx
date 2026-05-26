@@ -484,6 +484,58 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+
+// =============================================================================
+// PANEL-ISOLATED PUBLIC ROUTES
+// Cross-panel redirect FIX: Har panel ka apna isolated guard hai.
+// Ek panel ka token doosre panel ke login page ko redirect NAHI karega.
+// =============================================================================
+
+/**
+ * UserPublicRoute - /login, /signup, /wedding/login, /wedding/signup
+ * Sirf role='user' logged in ho to redirect karo.
+ * Partner/vendor token? -> User login page dikhao (cross-panel steal NAHI).
+ */
+const UserPublicRoute = ({ children, redirectTo = '/home' }) => {
+  const token = localStorage.getItem('token');
+  const userRaw = localStorage.getItem('user');
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  if (token && user?.role === 'user') {
+    return <Navigate to={redirectTo} replace />;
+  }
+  return children;
+};
+
+/**
+ * PartnerPublicRoute - /hotel/login, /hotel/register
+ * Sirf role='partner' logged in ho to redirect karo.
+ * User/vendor token? -> Partner login page dikhao.
+ */
+const PartnerPublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  const userRaw = localStorage.getItem('user');
+  const user = userRaw ? JSON.parse(userRaw) : null;
+  if (token && user?.role === 'partner') {
+    return <Navigate to="/hotel/dashboard" replace />;
+  }
+  return children;
+};
+
+/**
+ * WeddingVendorPublicRoute - /wedding/vendor/login, /wedding/vendor/signup
+ * Sirf role='vendor' logged in ho to redirect karo.
+ */
+const WeddingVendorPublicRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  const userRaw = localStorage.getItem('user');
+  const vendorUserRaw = localStorage.getItem('vendor_user');
+  const user = userRaw ? JSON.parse(userRaw) : (vendorUserRaw ? JSON.parse(vendorUserRaw) : null);
+  if (token && user?.role === 'vendor') {
+    return <Navigate to="/wedding/vendor/dashboard" replace />;
+  }
+  return children;
+};
+
 function App() {
   // Fix for Back Button in WebView/App Wrappers (Flutter/Android)
   // Ensures history stack has depth so "canGoBack" is true, preventing immediate app exit.
@@ -621,13 +673,13 @@ function App() {
       <Layout>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* User Auth Routes (Public Only) */}
+            {/* ── User Auth Routes — UserPublicRoute isolates user panel ── */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/taxi/*" element={<TaxiApp />} />
-            <Route path="/login" element={<PublicRoute><UserLogin /></PublicRoute>} />
-            <Route path="/wedding/login" element={<PublicRoute><UserLogin theme="wedding" /></PublicRoute>} />
-            <Route path="/signup" element={<PublicRoute><UserSignup /></PublicRoute>} />
-            <Route path="/wedding/signup" element={<PublicRoute><UserSignup theme="wedding" /></PublicRoute>} />
+            <Route path="/login" element={<UserPublicRoute redirectTo="/home"><UserLogin /></UserPublicRoute>} />
+            <Route path="/wedding/login" element={<UserPublicRoute redirectTo="/wedding"><UserLogin theme="wedding" /></UserPublicRoute>} />
+            <Route path="/signup" element={<UserPublicRoute redirectTo="/home"><UserSignup /></UserPublicRoute>} />
+            <Route path="/wedding/signup" element={<UserPublicRoute redirectTo="/wedding"><UserSignup theme="wedding" /></UserPublicRoute>} />
             <Route path="/r/:referralCode" element={<ReferralHandler />} />
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/terms" element={<TermsPage />} />
@@ -636,9 +688,9 @@ function App() {
             <Route path="/careers" element={<CareersPage />} />
 
 
-            {/* Hotel/Partner Module Routes */}
-            <Route path="/hotel/login" element={<HotelLogin />} />
-            <Route path="/hotel/register" element={<HotelSignup />} />
+            {/* ── Hotel/Partner Module — PartnerPublicRoute isolates partner panel ── */}
+            <Route path="/hotel/login" element={<PartnerPublicRoute><HotelLogin /></PartnerPublicRoute>} />
+            <Route path="/hotel/register" element={<PartnerPublicRoute><HotelSignup /></PartnerPublicRoute>} />
             <Route path="/hotel" element={<HotelLayout />}>
               <Route index element={<Navigate to="/hotel/login" replace />} />
               <Route path="partner" element={<Navigate to="/hotel" replace />} />
@@ -789,8 +841,8 @@ function App() {
 
             {/* Wedding Vendor Module Routes */}
             <Route element={<WeddingVendorAuthProvider><WeddingVendorProvider><Outlet /></WeddingVendorProvider></WeddingVendorAuthProvider>}>
-              <Route path="/wedding/vendor/login" element={<WeddingVendorLogin />} />
-              <Route path="/wedding/vendor/signup" element={<WeddingVendorSignup />} />
+              <Route path="/wedding/vendor/login" element={<WeddingVendorPublicRoute><WeddingVendorLogin /></WeddingVendorPublicRoute>} />
+              <Route path="/wedding/vendor/signup" element={<WeddingVendorPublicRoute><WeddingVendorSignup /></WeddingVendorPublicRoute>} />
               <Route path="/wedding/vendor/pending-approval" element={<WeddingVendorPendingApproval />} />
 
               {/* Vendor Onboarding (Integrated) */}

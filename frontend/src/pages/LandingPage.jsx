@@ -299,7 +299,7 @@ const LandingPage = () => {
                 <p className="text-white text-base md:text-xl font-medium leading-relaxed drop-shadow-md">
                     Find amazing things to do. Anytime, anywhere.
                 </p>
-                <Link to="/welcome?type=tour" className="block w-full md:w-auto">
+                <Link to="/welcome" className="block w-full md:w-auto">
                   <button className="bg-emerald-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-sm text-xs md:text-sm font-black uppercase tracking-widest hover:bg-emerald-700 transition-all transform hover:scale-105 shadow-xl flex items-center gap-3 md:ml-auto group pointer-events-auto w-full md:w-auto">
                       Explore Our Tours 
                       <span className="group-hover:translate-x-2 transition-transform">→</span>
@@ -361,7 +361,7 @@ const LandingPage = () => {
             { img: destDublin, title: 'Dublin, Ireland' },
             { img: destExuma, title: 'Exuma, Bahamas' }
           ].map((dest, i) => (
-            <Link to="/welcome?type=tour" key={i} className="text-center group cursor-pointer block">
+            <Link to="/welcome" key={i} className="text-center group cursor-pointer block">
               <div className="overflow-hidden mb-2 md:mb-4 aspect-square rounded-sm">
                 <img src={dest.img} alt={dest.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
               </div>
@@ -397,7 +397,7 @@ const LandingPage = () => {
           <h2 className="text-3xl md:text-5xl font-black tracking-widest mb-6 md:mb-8">OUR LATEST TOUR</h2>
           <p className="text-xs md:text-sm mb-2 opacity-80">Fri 15 March to Sun 17 March</p>
           <p className="text-lg md:text-xl font-bold mb-8 md:mb-10">$125 per person</p>
-          <Link to="/welcome?type=tour" className="inline-block bg-white text-emerald-950 px-8 md:px-12 py-3 md:py-4 text-xs md:text-sm font-black tracking-widest hover:bg-emerald-50 transition shadow-xl uppercase">
+          <Link to="/welcome" className="inline-block bg-white text-emerald-950 px-8 md:px-12 py-3 md:py-4 text-xs md:text-sm font-black tracking-widest hover:bg-emerald-50 transition shadow-xl uppercase">
             BOOK NOW
           </Link>
         </div>
