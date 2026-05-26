@@ -131,19 +131,45 @@ const UserLogin = ({ theme = 'hotel' }) => {
             } catch (fcmError) {
                 console.warn('[FCM] Could not dispatch register event', fcmError);
             }
-            // Dynamic redirect based on where they came from
+            // Dynamic redirect based on role AND which panel login page was used
             const userRaw = localStorage.getItem('user');
             const user = userRaw ? JSON.parse(userRaw) : null;
-            
-            let defaultRedirect = '/home';
+
+            let defaultRedirect;
             if (user?.role === 'partner') {
+                // Hotel partner → always hotel dashboard
                 defaultRedirect = '/hotel/dashboard';
             } else if (user?.role === 'vendor') {
+                // Wedding vendor → always vendor dashboard
                 defaultRedirect = '/wedding/vendor/dashboard';
+            } else {
+                // Normal user → depends on WHICH login page they used
+                // isWedding = true  → /wedding/login pe the → /wedding pe bhejo
+                // isWedding = false → /login pe the       → /home pe bhejo
+                defaultRedirect = isWedding ? '/wedding' : '/home';
             }
-            
-            const redirectTo = location.state?.from?.pathname || defaultRedirect;
+
+            // If there's a specific page they were trying to access, go there
+            // But only if it belongs to the SAME panel
+            const fromPath = location.state?.from?.pathname || '';
             const search = location.state?.from?.search || '';
+
+            // Safety: Don't let wedding login redirect to hotel routes and vice versa
+            const isFromWeddingRoute = fromPath.startsWith('/wedding');
+            const isFromHotelUserRoute = !fromPath.startsWith('/wedding') && !fromPath.startsWith('/hotel') && fromPath !== '';
+
+            let redirectTo = defaultRedirect;
+            if (fromPath) {
+                if (isWedding && isFromWeddingRoute) {
+                    // Wedding user going to wedding route — OK
+                    redirectTo = fromPath;
+                } else if (!isWedding && isFromHotelUserRoute) {
+                    // Hotel user going to hotel user route — OK
+                    redirectTo = fromPath;
+                }
+                // Otherwise ignore from path and use defaultRedirect
+            }
+
             navigate(redirectTo + search, { replace: true });
         } catch (err) {
             if (err.isBlocked || err.response?.data?.isBlocked || err.status === 403) {
