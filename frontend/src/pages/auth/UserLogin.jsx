@@ -353,7 +353,7 @@ const UserLogin = ({ theme = 'hotel' }) => {
                         <p className="text-sm font-bold" style={{ color: light }}>
                             New to {isWedding ? 'Destination Weddings' : 'My Destination'}?{' '}
                             <button
-                                onClick={() => navigate('/signup')}
+                                onClick={() => navigate(isWedding ? '/wedding/signup' : '/signup')}
                                 className="font-black hover:underline ml-1 px-1"
                                 style={{ color: primary }}
                             >

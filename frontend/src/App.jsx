@@ -627,6 +627,7 @@ function App() {
             <Route path="/login" element={<PublicRoute><UserLogin /></PublicRoute>} />
             <Route path="/wedding/login" element={<PublicRoute><UserLogin theme="wedding" /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><UserSignup /></PublicRoute>} />
+            <Route path="/wedding/signup" element={<PublicRoute><UserSignup theme="wedding" /></PublicRoute>} />
             <Route path="/r/:referralCode" element={<ReferralHandler />} />
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/terms" element={<TermsPage />} />
