@@ -20,6 +20,17 @@ const LandingPage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [cmsData, setCmsData] = useState(null);
+
+  useEffect(() => {
+    import('../services/apiService').then(({ api }) => {
+      api.get('/cms/landing-page').then(res => {
+        if (res.data?.success) {
+          setCmsData(res.data.data);
+        }
+      }).catch(err => console.error("Failed to load CMS data:", err));
+    }).catch(err => console.error("Failed to import api:", err));
+  }, []);
 
   // Check login before navigating to protected pages
   const handleNavigation = (targetPath) => {
@@ -260,114 +271,77 @@ const LandingPage = () => {
 
 
 
-        {/* Hero Content */}
-        <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-between px-8 md:px-20 pt-10 pb-12 md:pb-32">
-          {/* Main Title Left */}
-          <div className="flex-1 flex flex-col items-start gap-4 z-10 mt-20 md:mt-0">
-            <div className="relative w-full">
-              <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter opacity-10 absolute -left-2 -top-2 select-none">
-                Experience
-              </h1>
-              <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter">
-                Unforgettable
-              </h1>
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-4 mt-2">
-                 <span className="text-4xl md:text-5xl lg:text-7xl font-['Dancing_Script',cursive] text-emerald-400 -rotate-6 ml-2 md:ml-0">
-                    travel
-                 </span>
-                 <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter mt-1 md:mt-0">
-                    Experiences
-                 </h1>
+          {/* Hero Content */}
+          <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-between px-8 md:px-20 pt-10 pb-12 md:pb-32">
+            {/* Main Title Left */}
+            <div className="flex-1 flex flex-col items-start gap-4 z-10 mt-20 md:mt-0">
+              <div className="relative w-full">
+                <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter opacity-10 absolute -left-2 -top-2 select-none">
+                  {cmsData?.hero?.titleLines?.[0] || "Experience"}
+                </h1>
+                <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter">
+                  {cmsData?.hero?.titleLines?.[1] || "Unforgettable"}
+                </h1>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-4 mt-2">
+                   <span className="text-4xl md:text-5xl lg:text-7xl font-['Dancing_Script',cursive] text-emerald-400 -rotate-6 ml-2 md:ml-0">
+                      {cmsData?.hero?.titleLines?.[2] || "travel"}
+                   </span>
+                   <h1 className="text-[10vw] sm:text-[9vw] md:text-[8vw] lg:text-[7vw] font-black text-white leading-[0.8] uppercase tracking-tighter mt-1 md:mt-0">
+                      {cmsData?.hero?.titleLines?.[3] || "Experiences"}
+                   </h1>
+                </div>
+              </div>
+            </div>
+  
+            {/* Couple Image Center */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <div className="w-full h-full max-w-5xl flex items-end justify-center">
+                  <img 
+                      src={coupleImg} 
+                      alt="Couple Trekking" 
+                      className="w-auto h-[80%] md:h-[95%] object-contain object-bottom drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
+                  />
+              </div>
+            </div>
+  
+            {/* Info & Button Right */}
+            <div className="flex-1 flex flex-col items-center md:items-end text-center md:text-right gap-6 md:gap-8 z-30 mt-auto md:mt-0 w-full pb-0">
+              <div className="max-w-xs space-y-4 flex flex-col items-center md:items-end">
+                  <p className="text-white text-base md:text-xl font-medium leading-relaxed drop-shadow-md">
+                      {cmsData?.hero?.subText || "Find amazing things to do. Anytime, anywhere."}
+                  </p>
+                  <Link to={cmsData?.hero?.buttonLink || "/welcome"} className="block w-full md:w-auto">
+                    <button className="bg-emerald-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-sm text-xs md:text-sm font-black uppercase tracking-widest hover:bg-emerald-700 transition-all transform hover:scale-105 shadow-xl flex items-center gap-3 md:ml-auto group pointer-events-auto w-full md:w-auto">
+                        {cmsData?.hero?.buttonText || "Explore Our Tours"}
+                        <span className="group-hover:translate-x-2 transition-transform">→</span>
+                    </button>
+                  </Link>
               </div>
             </div>
           </div>
-
-          {/* Couple Image Center */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-            <div className="w-full h-full max-w-5xl flex items-end justify-center">
-                <img 
-                    src={coupleImg} 
-                    alt="Couple Trekking" 
-                    className="w-auto h-[80%] md:h-[95%] object-contain object-bottom drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
-                />
-            </div>
-          </div>
-
-          {/* Info & Button Right */}
-          <div className="flex-1 flex flex-col items-center md:items-end text-center md:text-right gap-6 md:gap-8 z-30 mt-auto md:mt-0 w-full pb-0">
-            <div className="max-w-xs space-y-4 flex flex-col items-center md:items-end">
-                <p className="text-white text-base md:text-xl font-medium leading-relaxed drop-shadow-md">
-                    Find amazing things to do. Anytime, anywhere.
-                </p>
-                <Link to="/welcome" className="block w-full md:w-auto">
-                  <button className="bg-emerald-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-sm text-xs md:text-sm font-black uppercase tracking-widest hover:bg-emerald-700 transition-all transform hover:scale-105 shadow-xl flex items-center gap-3 md:ml-auto group pointer-events-auto w-full md:w-auto">
-                      Explore Our Tours 
-                      <span className="group-hover:translate-x-2 transition-transform">→</span>
-                  </button>
-                </Link>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* 2. Search & Features */}
-      <section className="relative z-20 -mt-10 max-w-6xl mx-auto px-4">
-        <div className="bg-white shadow-xl rounded-sm p-4 flex flex-col md:flex-row gap-4 mb-16 border border-gray-100">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <select className="border border-gray-200 p-3 text-sm text-gray-600 focus:outline-none"><option>Destinations</option></select>
-            <select className="border border-gray-200 p-3 text-sm text-gray-600 focus:outline-none"><option>Month</option></select>
-            <select className="border border-gray-200 p-3 text-sm text-gray-600 focus:outline-none"><option>Travel Type</option></select>
-          </div>
-          <button className="bg-emerald-600 text-white px-8 py-3 text-sm font-medium hover:bg-emerald-700 transition">Search</button>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center pb-10 md:pb-20 border-b border-emerald-100">
-          <div className="flex flex-col items-center gap-1 md:gap-3">
-            <div className="w-16 h-16 flex items-center justify-center">
-              <img src="https://cdn-icons-gif.flaticon.com/6844/6844422.gif" alt="Location Icon" className="w-12 h-12 object-contain" />
-            </div>
-            <span className="text-sm font-bold text-gray-800 leading-tight">Travel without<br/>hassle</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 md:gap-3">
-            <div className="w-16 h-16 flex items-center justify-center">
-              <img src="https://cdn-icons-gif.flaticon.com/17093/17093492.gif" alt="Reviews Icon" className="w-12 h-12 object-contain" />
-            </div>
-            <span className="text-sm font-bold text-gray-800 leading-tight">Millions of<br/>reviews</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 md:gap-3">
-            <div className="w-16 h-16 flex items-center justify-center">
-              <img src="https://cdn-icons-gif.flaticon.com/19028/19028843.gif" alt="Budget Icon" className="w-12 h-12 object-contain" />
-            </div>
-            <span className="text-sm font-bold text-gray-800 leading-tight">Perfect for your<br/>budget</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 md:gap-3">
-            <div className="w-16 h-16 flex items-center justify-center">
-              <img src="https://cdn-icons-gif.flaticon.com/9284/9284550.gif" alt="Travel Tips Icon" className="w-12 h-12 object-contain" />
-            </div>
-            <span className="text-sm font-bold text-gray-800 leading-tight">Best travel<br/>tips</span>
-          </div>
-        </div>
-      </section>
+      {/* 2. Search & Features (Removed as requested) */}
 
       {/* 3. Top Destinations */}
       <section className="pt-4 md:pt-8 pb-10 md:pb-20 max-w-6xl mx-auto px-4 text-center">
-        <p className="text-emerald-700 text-sm mb-1 md:mb-2">Select your perfect trips</p>
-        <h2 className="text-2xl md:text-3xl font-bold tracking-wider text-gray-900 mb-6 md:mb-12">TOP DESTINATION</h2>
+        <p className="text-emerald-700 text-sm mb-1 md:mb-2">{cmsData?.destinations?.sectionTitle || "Select your perfect trips"}</p>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-wider text-gray-900 mb-6 md:mb-12">{cmsData?.destinations?.sectionHeading || "TOP DESTINATION"}</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {[
-            { img: destAmsterdam, title: 'Amsterdam, Netherland' },
-            { img: destLisbon, title: 'Lisbon, Portugal' },
-            { img: destDublin, title: 'Dublin, Ireland' },
-            { img: destExuma, title: 'Exuma, Bahamas' }
-          ].map((dest, i) => (
-            <Link to="/welcome" key={i} className="text-center group cursor-pointer block">
-              <div className="overflow-hidden mb-2 md:mb-4 aspect-square rounded-sm">
-                <img src={dest.img} alt={dest.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+          {(cmsData?.destinations?.items?.length > 0 ? cmsData.destinations.items : [
+            { img: destAmsterdam, title: 'Amsterdam, Netherland', description: 'Discover the charm of historic canals and vibrant culture in the heart of the Netherlands.' },
+            { img: destLisbon, title: 'Lisbon, Portugal', description: 'Discover the charm of historic canals and vibrant culture in the heart of the Netherlands.' },
+            { img: destDublin, title: 'Dublin, Ireland', description: 'Discover the charm of historic canals and vibrant culture in the heart of the Netherlands.' },
+            { img: destExuma, title: 'Exuma, Bahamas', description: 'Discover the charm of historic canals and vibrant culture in the heart of the Netherlands.' }
+          ]).map((dest, i) => (
+            <Link to={dest.link || "/welcome"} key={i} className="text-center group cursor-pointer block">
+              <div className="overflow-hidden mb-2 md:mb-4 aspect-square rounded-sm bg-gray-50 flex items-center justify-center">
+                <img src={dest.image || dest.img} alt={dest.title} className="w-full h-full object-contain object-center group-hover:scale-110 transition duration-500" />
               </div>
               <h3 className="font-bold text-xs md:text-sm text-gray-900 mb-1 md:mb-3">{dest.title}</h3>
-              <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-2">
-                Discover the charm of historic canals and vibrant culture in the heart of the Netherlands.
+              <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-2 line-clamp-3">
+                {dest.description}
               </p>
             </Link>
           ))}
@@ -377,89 +351,33 @@ const LandingPage = () => {
       {/* 4. Latest Tour */}
       <section className="relative py-32 bg-emerald-900 text-center text-white my-10 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img src={latestTourBg} alt="City Night" className="w-full h-full object-cover opacity-80" />
+          <img src={cmsData?.latestTour?.backgroundImage || latestTourBg} alt="City Night" className="w-full h-full object-cover opacity-80" />
         </div>
         
         {/* Floating Images (Polaroid Style) */}
         <div className="absolute left-[2%] md:left-[5%] top-[5%] md:top-1/2 md:-translate-y-1/2 block z-10 opacity-70 md:opacity-100">
           <div className="bg-white p-1 pb-2 transform -rotate-12 border-2 border-white shadow-lg w-24 h-32 md:w-64 md:h-80">
-            <img src={destAmsterdam} alt="Tour Left" className="w-full h-full object-cover" />
+            <img src={cmsData?.latestTour?.leftImage || destAmsterdam} alt="Tour Left" className="w-full h-full object-cover" />
           </div>
         </div>
         <div className="absolute right-[2%] md:right-[5%] bottom-[5%] md:bottom-auto md:top-1/2 md:-translate-y-1/2 block z-10 opacity-70 md:opacity-100">
           <div className="bg-white p-1 pb-2 transform rotate-12 border-2 border-white shadow-lg w-24 h-32 md:w-64 md:h-80">
-            <img src={destLisbon} alt="Tour Right" className="w-full h-full object-cover" />
+            <img src={cmsData?.latestTour?.rightImage || destLisbon} alt="Tour Right" className="w-full h-full object-cover" />
           </div>
         </div>
 
         <div className="relative z-20 max-w-lg mx-auto px-4 py-8 md:py-0">
-          <p className="text-xs md:text-sm mb-2 font-medium tracking-wide">Last minute trip</p>
-          <h2 className="text-3xl md:text-5xl font-black tracking-widest mb-6 md:mb-8">OUR LATEST TOUR</h2>
-          <p className="text-xs md:text-sm mb-2 opacity-80">Fri 15 March to Sun 17 March</p>
-          <p className="text-lg md:text-xl font-bold mb-8 md:mb-10">$125 per person</p>
-          <Link to="/welcome" className="inline-block bg-white text-emerald-950 px-8 md:px-12 py-3 md:py-4 text-xs md:text-sm font-black tracking-widest hover:bg-emerald-50 transition shadow-xl uppercase">
-            BOOK NOW
+          <p className="text-xs md:text-sm mb-2 font-medium tracking-wide">{cmsData?.latestTour?.subtitle || "Last minute trip"}</p>
+          <h2 className="text-3xl md:text-5xl font-black tracking-widest mb-6 md:mb-8">{cmsData?.latestTour?.title || "OUR LATEST TOUR"}</h2>
+          <p className="text-xs md:text-sm mb-2 opacity-80">{cmsData?.latestTour?.dateText || "Fri 15 March to Sun 17 March"}</p>
+          <p className="text-lg md:text-xl font-bold mb-8 md:mb-10">{cmsData?.latestTour?.priceText || "$125 per person"}</p>
+          <Link to={cmsData?.latestTour?.buttonLink || "/welcome"} className="inline-block bg-white text-emerald-950 px-8 md:px-12 py-3 md:py-4 text-xs md:text-sm font-black tracking-widest hover:bg-emerald-50 transition shadow-xl uppercase">
+            {cmsData?.latestTour?.buttonText || "BOOK NOW"}
           </Link>
         </div>
       </section>
 
-      {/* 5. Travel Tips / Flight Search (New Section) */}
-      <section className="pt-4 md:pt-8 pb-10 md:pb-20 max-w-6xl mx-auto px-4">
-        <div className="text-center mb-6 md:mb-12">
-          <p className="text-emerald-700 text-xs md:text-sm mb-1 md:mb-2 font-medium">Book your categories</p>
-          <div className="relative inline-block">
-            <h2 className="text-2xl md:text-4xl font-black tracking-widest text-gray-900">TRAVEL TIPS</h2>
-            <div className="absolute -left-12 top-1/2 w-10 h-[2px] bg-gray-200 hidden md:block"></div>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 items-start">
-          {/* Left Text */}
-          <div className="lg:w-1/3">
-            <p className="text-gray-500 text-xs md:text-sm leading-relaxed">
-              At MyDestionation, we believe that every journey should be as unique as the traveler. 
-              Our expert travel tips and curated categories help you plan the perfect escape, 
-              from budget-friendly flights to luxury stays. Explore with confidence and ease.
-            </p>
-          </div>
-
-          {/* Right Card with Form */}
-          <div className="lg:w-2/3 w-full bg-white border border-gray-100 shadow-sm p-4 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 items-center rounded-sm">
-            {/* Circular Image */}
-            <div className="w-32 h-32 md:w-64 md:h-64 flex-shrink-0 rounded-full overflow-hidden border-2 md:border-4 border-gray-50 shadow-inner">
-               <img src={airplane} alt="Flight View" className="w-full h-full object-cover" />
-            </div>
-
-            {/* Form Fields */}
-            <div className="flex-1 w-full space-y-4 md:space-y-6">
-              <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest">Flights</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500">City / Destination</label>
-                  <select className="w-full border border-gray-200 p-2 text-sm focus:outline-none bg-gray-50/50"><option>---</option></select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500">Date from</label>
-                  <input type="text" className="w-full border border-gray-200 p-2 text-sm focus:outline-none" placeholder="" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500">No. of person</label>
-                  <select className="w-full border border-gray-200 p-2 text-sm focus:outline-none bg-gray-50/50"><option>---</option></select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500">Date To</label>
-                  <input type="text" className="w-full border border-gray-200 p-2 text-sm focus:outline-none" placeholder="" />
-                </div>
-              </div>
-              <div className="flex justify-end pt-2">
-                <button className="bg-emerald-700 text-white px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest hover:bg-emerald-800 transition shadow-lg">
-                   Search Flight
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 5. Travel Tips / Flight Search (Removed as requested) */}
 
       {/* 6. Categories */}
       <section className="pt-4 pb-10 md:pb-20 max-w-6xl mx-auto px-4">
@@ -484,49 +402,29 @@ const LandingPage = () => {
 
       {/* 7. Services Section */}
       <section className="pt-4 pb-10 md:pb-20 max-w-6xl mx-auto px-4 text-center">
-        <p className="text-emerald-700 text-xs md:text-sm mb-1 md:mb-2 font-medium">We fulfill your needs</p>
+        <p className="text-emerald-700 text-xs md:text-sm mb-1 md:mb-2 font-medium">{cmsData?.services?.sectionSubtitle || "We fulfill your needs"}</p>
         <div className="relative inline-block mb-8 md:mb-16">
-          <h2 className="text-2xl md:text-4xl font-black tracking-widest text-gray-900">SERVICES</h2>
+          <h2 className="text-2xl md:text-4xl font-black tracking-widest text-gray-900">{cmsData?.services?.sectionTitle || "SERVICES"}</h2>
           <div className="absolute -left-12 top-1/2 w-10 h-[2px] bg-gray-200 hidden md:block"></div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-12">
-          <a href="http://localhost:5173/" className="flex flex-col items-center hover:scale-105 transition-transform cursor-pointer">
-            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mb-2 md:mb-6">
-              <img src="https://cdn-icons-gif.flaticon.com/15576/15576191.gif" alt="Transport Icon" className="w-10 h-10 md:w-16 md:h-16 object-contain" />
+          {(cmsData?.services?.items?.length > 0 ? cmsData.services.items : [
+            { title: 'Small transport', description: 'Reliable and comfortable transportation services for your local tours and transfers.', iconUrl: 'https://cdn-icons-gif.flaticon.com/15576/15576191.gif' },
+            { title: 'Events', description: 'Plan and execute unforgettable events and gatherings with our expert coordination.', iconUrl: 'https://cdn-icons-gif.flaticon.com/8701/8701055.gif' },
+            { title: 'Vacation package', description: 'Tailor-made vacation packages designed to give you the ultimate travel experience.', iconUrl: 'https://cdn-icons-gif.flaticon.com/19034/19034819.gif' },
+            { title: 'Resorts stay', description: 'Handpicked luxury resorts and stays for your perfect relaxation and comfort.', iconUrl: 'https://cdn-icons-gif.flaticon.com/19008/19008727.gif' }
+          ]).map((svc, i) => (
+            <div key={i} className="flex flex-col items-center hover:scale-105 transition-transform">
+              <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mb-2 md:mb-6">
+                <img src={svc.iconUrl} alt={svc.title} className="w-10 h-10 md:w-16 md:h-16 object-contain" />
+              </div>
+              <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-4">{svc.title}</h4>
+              <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-0">
+                {svc.description}
+              </p>
             </div>
-            <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-4">Small transport</h4>
-            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-0">
-              Reliable and comfortable transportation services for your local tours and transfers.
-            </p>
-          </a>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mb-2 md:mb-6">
-              <img src="https://cdn-icons-gif.flaticon.com/8701/8701055.gif" alt="Events Icon" className="w-10 h-10 md:w-16 md:h-16 object-contain" />
-            </div>
-            <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-4">Events</h4>
-            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-0">
-              Plan and execute unforgettable events and gatherings with our expert coordination.
-            </p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mb-2 md:mb-6">
-              <img src="https://cdn-icons-gif.flaticon.com/19034/19034819.gif" alt="Vacation Icon" className="w-10 h-10 md:w-16 md:h-16 object-contain" />
-            </div>
-            <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-4">Vacation package</h4>
-            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-0">
-              Tailor-made vacation packages designed to give you the ultimate travel experience.
-            </p>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center mb-2 md:mb-6">
-              <img src="https://cdn-icons-gif.flaticon.com/19008/19008727.gif" alt="Resorts Icon" className="w-10 h-10 md:w-16 md:h-16 object-contain" />
-            </div>
-            <h4 className="text-sm md:text-lg font-bold text-gray-800 mb-1 md:mb-4">Resorts stay</h4>
-            <p className="text-[10px] md:text-xs text-gray-500 leading-relaxed px-1 md:px-0">
-              Handpicked luxury resorts and stays for your perfect relaxation and comfort.
-            </p>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -581,10 +479,9 @@ const LandingPage = () => {
             <img src={heroBg} alt="Staff Banner" className="w-full h-full object-cover brightness-[0.4]" />
           </div>
           <div className="relative z-10 max-w-2xl space-y-4 md:space-y-6">
-            <h2 className="text-2xl md:text-4xl font-black tracking-widest">OUR STAFF</h2>
+            <h2 className="text-2xl md:text-4xl font-black tracking-widest">{cmsData?.staff?.sectionTitle || "OUR STAFF"}</h2>
             <p className="text-xs md:text-sm opacity-80 leading-relaxed">
-              Our team of dedicated travel experts is here to ensure your journey is smooth, safe, and unforgettable. 
-              Meet the people who make MyDestionation the best in the business.
+              {cmsData?.staff?.description || "Our team of dedicated travel experts is here to ensure your journey is smooth, safe, and unforgettable. Meet the people who make MyDestionation the best in the business."}
             </p>
             <button 
               onClick={() => setIsJoinModalOpen(true)}
@@ -598,20 +495,20 @@ const LandingPage = () => {
         {/* Staff Grid */}
         <div className="max-w-7xl mx-auto px-4 -mt-10 md:-mt-20 relative z-20 pb-10 md:pb-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-            {[
-              { name: "Elly Spitch", role: "CUSTOMER CARE", img: destAmsterdam },
-              { name: "Hannah Zafron", role: "SPECIALIST", img: destLisbon },
-              { name: "Janne Dcosta", role: "FOUNDER", img: destDublin },
-              { name: "Adam Johnson", role: "PRESIDENT", img: destExuma }
-            ].map((staff, i) => (
+            {(cmsData?.staff?.items?.length > 0 ? cmsData.staff.items : [
+              { name: "Elly Spitch", role: "CUSTOMER CARE", img: destAmsterdam, description: "Expert in providing personalized travel solutions and ensuring customer satisfaction." },
+              { name: "Hannah Zafron", role: "SPECIALIST", img: destLisbon, description: "Expert in providing personalized travel solutions and ensuring customer satisfaction." },
+              { name: "Janne Dcosta", role: "FOUNDER", img: destDublin, description: "Expert in providing personalized travel solutions and ensuring customer satisfaction." },
+              { name: "Adam Johnson", role: "PRESIDENT", img: destExuma, description: "Expert in providing personalized travel solutions and ensuring customer satisfaction." }
+            ]).map((staff, i) => (
               <div key={i} className="bg-white p-2 shadow-xl text-center group">
                 <div className="aspect-square overflow-hidden mb-3 md:mb-6">
-                  <img src={staff.img} alt={staff.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                  <img src={staff.image || staff.img} alt={staff.name} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
                 </div>
                 <h4 className="text-sm md:text-lg font-bold text-gray-900">{staff.name}</h4>
                 <p className="text-[10px] md:text-xs text-emerald-600 font-bold tracking-widest mb-2 md:mb-4 uppercase">{staff.role}</p>
                 <p className="text-[10px] md:text-xs text-gray-500 mb-3 md:mb-6 px-1 md:px-4">
-                  Expert in providing personalized travel solutions and ensuring customer satisfaction.
+                  {staff.description}
                 </p>
                 <button className="border md:border-2 border-gray-200 px-3 md:px-6 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-bold text-gray-400 hover:bg-emerald-600 hover:border-emerald-600 hover:text-white transition-all uppercase mb-2 md:mb-4">
                   Contact Me
@@ -628,11 +525,10 @@ const LandingPage = () => {
           <div>
             <div className="flex items-center gap-3 mb-6">
               <img src={logo} alt="MyDestionation" className="h-10 w-auto brightness-0 invert" />
-              <span className="font-bold text-xl">MyDestionation</span>
+              <span className="font-bold text-xl">{cmsData?.footer?.companyName || "MyDestionation"}</span>
             </div>
             <p className="text-xs text-gray-400">
-              Your ultimate companion for unforgettable journeys. We provide premium travel services, 
-              personalized itineraries, and the best deals for your next adventure.
+              {cmsData?.footer?.companyDescription || "Your ultimate companion for unforgettable journeys. We provide premium travel services, personalized itineraries, and the best deals for your next adventure."}
             </p>
           </div>
           <div>
@@ -645,16 +541,22 @@ const LandingPage = () => {
           <div>
             <h4 className="font-bold mb-4">Contact Info</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li className="flex items-start gap-2"><MapPin size={16} className="mt-1 flex-shrink-0" /> 1 My Address, My Street, New York City, NY, USA</li>
+              <li className="flex items-start gap-2"><MapPin size={16} className="mt-1 flex-shrink-0" /> {cmsData?.footer?.address || "1 My Address, My Street, New York City, NY, USA"}</li>
+              {cmsData?.footer?.phone && (
+                <li className="flex items-start gap-2">📞 {cmsData.footer.phone}</li>
+              )}
+              {cmsData?.footer?.email && (
+                <li className="flex items-start gap-2">✉️ {cmsData.footer.email}</li>
+              )}
             </ul>
           </div>
           <div>
             <h4 className="font-bold mb-4">Pay safely with us</h4>
-            <p className="text-xs text-gray-400">The payment is encrypted and transmitted securely with an SSL protocol.</p>
+            <p className="text-xs text-gray-400">{cmsData?.footer?.paymentNote || "The payment is encrypted and transmitted securely with an SSL protocol."}</p>
           </div>
         </div>
         <div className="text-center border-t border-gray-800 pt-8 text-xs text-gray-500">
-          © {new Date().getFullYear()} MyDestionation. All rights reserved.
+          {cmsData?.footer?.copyrightText || `© ${new Date().getFullYear()} MyDestionation. All rights reserved.`}
         </div>
       </footer>
     </div>

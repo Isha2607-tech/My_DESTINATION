@@ -1,4 +1,5 @@
 import { Admin } from '../admin/models/Admin.js';
+import MainAdmin from '../../admin/models/Admin.js';
 import { Owner } from '../admin/models/Owner.js';
 import { ServiceStore } from '../admin/models/ServiceStore.js';
 import { ServiceCenterStaff } from '../admin/models/ServiceCenterStaff.js';
@@ -109,7 +110,11 @@ export const authenticate = (allowedRoles = [], options = {}) => async (req, _re
       throw new ApiError(401, 'Unsupported auth role');
     }
 
-    const entity = await Model.findById(payload.sub);
+    let entity = await Model.findById(payload.sub || payload.id);
+
+    if (!entity && normalizedRole === 'admin') {
+      entity = await MainAdmin.findById(payload.sub || payload.id);
+    }
 
     if (!entity) {
       throw new ApiError(401, 'Authenticated account no longer exists');

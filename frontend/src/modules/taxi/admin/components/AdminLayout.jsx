@@ -1235,8 +1235,8 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const token = getTaxiAdminToken();
-    if (!token && !window.location.pathname.includes('/taxi/admin/login')) {
-      navigate('/taxi/admin/login');
+    if (!token && !window.location.pathname.includes('/admin/login')) {
+      navigate('/admin/login');
       return undefined;
     }
 
@@ -1318,7 +1318,7 @@ const AdminLayout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminInfo');
     setIsUserMenuOpen(false);
-    navigate('/taxi/admin/login');
+    navigate('/admin/login');
   };
 
   return (

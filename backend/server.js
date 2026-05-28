@@ -35,6 +35,7 @@ import { configureTaxiSocketServer } from './modules/taxi/socket/index.js';
 import { restoreScheduledDispatches } from './modules/taxi/services/dispatchService.js';
 import weddingRoutes from './modules/wedding/routes/weddingRoutes.js';
 import notificationRoutes from './modules/notification/routes/notificationRoutes.js';
+import cmsRoutes from './modules/cms/routes/cmsRoutes.js';
 
 // Global Process Handlers
 process.on('unhandledRejection', (reason) => {
@@ -188,6 +189,7 @@ app.use('/api/taxi', taxiRouter);
 app.use('/api/v1', taxiRouter);
 app.use('/api/wedding', weddingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/cms', cmsRoutes);
 
 // 404 Handler
 app.use((req, res) => {

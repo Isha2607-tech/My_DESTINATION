@@ -58,8 +58,19 @@ const CancellationPage = React.lazy(() => import('./pages/user/CancellationPage'
 const ReferralHandler = React.lazy(() => import('./pages/auth/ReferralHandler'));
 const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 
+// Lazy Imports - CMS Admin Pages
+const CMSLogin = React.lazy(() => import('./app/cms-admin/pages/CMSLogin'));
+const CMSLayout = React.lazy(() => import('./app/cms-admin/layouts/CMSLayout'));
+const CMSDashboard = React.lazy(() => import('./app/cms-admin/pages/CMSDashboard'));
+const CMSHeroConfig = React.lazy(() => import('./app/cms-admin/pages/CMSHeroConfig'));
+const CMSDestinations = React.lazy(() => import('./app/cms-admin/pages/CMSDestinations'));
+const CMSPromoBanner = React.lazy(() => import('./app/cms-admin/pages/CMSPromoBanner'));
+const CMSServices = React.lazy(() => import('./app/cms-admin/pages/CMSServices'));
+const CMSStaff = React.lazy(() => import('./app/cms-admin/pages/CMSStaff'));
+const CMSFooter = React.lazy(() => import('./app/cms-admin/pages/CMSFooter'));
+
 // Lazy Imports - Admin Pages
-const AdminLogin = React.lazy(() => import('./app/admin/pages/AdminLogin'));
+const AdminLogin = React.lazy(() => import('./modules/admin/pages/auth/AdminLogin'));
 const AdminSignup = React.lazy(() => import('./app/admin/pages/AdminSignup'));
 const AdminDashboard = React.lazy(() => import('./app/admin/pages/AdminDashboard'));
 const AdminHotelDetail = React.lazy(() => import('./app/admin/pages/AdminHotelDetail'));
@@ -211,6 +222,7 @@ const Layout = ({ children }) => {
   // Disable Lenis on admin-style dashboard routes so nested panels keep native wheel/touchpad scrolling.
   const isCmsRoute =
     location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/cms-admin') ||
     location.pathname.startsWith('/taxi/admin') ||
     location.pathname.startsWith('/taxi/user-import') ||
     location.pathname.startsWith('/taxi/driver-import') ||
@@ -255,7 +267,7 @@ const Layout = ({ children }) => {
   }, []);
 
   // 1. GLOBAL HIDE: Auth pages, Admin, and Property Wizard
-  const globalHideRoutes = ['/login', '/signup', '/register', '/admin', '/hotel/join', '/welcome'];
+  const globalHideRoutes = ['/login', '/signup', '/register', '/admin', '/cms-admin', '/hotel/join', '/welcome'];
   const isWeddingRoute = location.pathname.startsWith('/wedding');
   const isTaxiRoute = location.pathname.startsWith('/taxi');
   const shouldGlobalHide = location.pathname === '/' || globalHideRoutes.some(route => location.pathname.includes(route)) || isWeddingRoute || isTaxiRoute;
@@ -730,6 +742,18 @@ function App() {
               {/* Public Partner Pages — accessible without login */}
               <Route path="privacy" element={<PartnerPrivacy />} />
               <Route path="contact" element={<PartnerContact />} />
+            </Route>
+
+            {/* CMS Admin Routes */}
+            <Route path="/cms-admin/login" element={<CMSLogin />} />
+            <Route path="/cms-admin" element={<CMSLayout />}>
+              <Route index element={<CMSDashboard />} />
+              <Route path="hero" element={<CMSHeroConfig />} />
+              <Route path="destinations" element={<CMSDestinations />} />
+              <Route path="promo" element={<CMSPromoBanner />} />
+              <Route path="services" element={<CMSServices />} />
+              <Route path="staff" element={<CMSStaff />} />
+              <Route path="footer" element={<CMSFooter />} />
             </Route>
 
             {/* Admin Auth Routes */}

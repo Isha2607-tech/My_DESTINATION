@@ -25,8 +25,8 @@ api.interceptors.request.use((config) => {
   } else if (path.startsWith('/wedding')) {
     // For general wedding pages like /settings or /my-enquiries
     effectiveToken = token || vendorToken || adminWeddingToken || adminToken;
-  } else if (path.startsWith('/admin')) {
-    effectiveToken = adminToken || token;
+  } else if (path.startsWith('/admin') || path.startsWith('/cms-admin')) {
+    effectiveToken = localStorage.getItem('cmsToken') || adminToken || token;
   } else {
     effectiveToken = token || adminToken;
   }

@@ -66,7 +66,7 @@ const AdminSidebar = () => {
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
     toast.success("Successfully logged out");
-    navigate("/wedding/admin/login");
+    navigate("/admin/login");
   };
 
   return (

@@ -13,7 +13,7 @@ import fs from 'fs';
 
 const generateToken = (id, role) => {
   // No expiresIn: tokens never expire; users only get logged out manually
-  return jwt.sign({ id, role }, process.env.JWT_SECRET);
+  return jwt.sign({ id, sub: id, role }, process.env.JWT_SECRET);
 };
 
 export const checkExists = async (req, res) => {

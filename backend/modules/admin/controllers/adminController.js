@@ -1566,6 +1566,8 @@ export const uploadPropertyImage = async (req, res) => {
       folder = 'rooms';
     } else if (req.body.type === 'document') {
       folder = 'documents';
+    } else if (req.body.type === 'landing_page') {
+      folder = 'landing_page';
     }
 
     const uploadPromises = filesToUpload.map(file =>

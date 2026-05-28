@@ -1,48 +1,151 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Mail, Lock, ArrowRight, Loader2, AlertCircle, KeyRound, CheckCircle2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import {
+  Lock, Mail, Eye, EyeOff, KeyRound, ArrowRight,
+  Hotel, Heart, Car, LayoutDashboard, ChevronDown, ShieldCheck
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminService } from '../../services/adminService';
-import { useSettings } from '../../../../shared/context/SettingsContext';
+import { api } from '../../../../services/apiService';
+import useAdminStore from '../../../../app/admin/store/adminStore';
 
+import { adminService } from '../../services/adminService';
+import adminBg from '../../../../assets/admin_bg.png'; // Premium background image
+
+// ─── Shared unified admin login via main API ────────────────────────────────────
+const unifiedAdminLogin = (email, password) => api.post('/auth/admin/login', { email, password });
+
+// ─── Panel Configuration ─────────────────────────────────────────────────────
+const PANELS = [
+  {
+    key: 'hotel',
+    label: 'Hotel Admin',
+    sublabel: 'Hotel & Property Management',
+    icon: Hotel,
+    color: '#10b981',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-200/50',
+    textColor: 'text-emerald-600',
+    buttonColor: 'bg-emerald-600 hover:bg-emerald-700'
+  },
+  {
+    key: 'wedding',
+    label: 'Wedding Admin',
+    sublabel: 'Destination Wedding Management',
+    icon: Heart,
+    color: '#ec4899',
+    bg: 'bg-pink-500/10',
+    border: 'border-pink-200/50',
+    textColor: 'text-pink-600',
+    buttonColor: 'bg-pink-600 hover:bg-pink-700'
+  },
+  {
+    key: 'taxi',
+    label: 'Rider / Taxi Admin',
+    sublabel: 'Taxi & Transport Management',
+    icon: Car,
+    color: '#f59e0b',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-200/50',
+    textColor: 'text-amber-600',
+    buttonColor: 'bg-amber-500 hover:bg-amber-600'
+  },
+  {
+    key: 'cms',
+    label: 'CMS Admin',
+    sublabel: 'Website Content Management',
+    icon: LayoutDashboard,
+    color: '#6366f1',
+    bg: 'bg-indigo-500/10',
+    border: 'border-indigo-200/50',
+    textColor: 'text-indigo-600',
+    buttonColor: 'bg-indigo-600 hover:bg-indigo-700'
+  },
+];
+
+// ─── Login logic per panel ────────────────────────────────────────────────────
+const loginByPanel = async (panelKey, email, password, adminStoreLogin) => {
+  // Use the robust unified backend auth for ALL panels
+  const response = await unifiedAdminLogin(email, password);
+  const payload = response?.data || response || {};
+  const authData = payload?.user ? payload : (payload?.data || payload || {});
+  
+  const token = authData.token || '';
+  const user = authData.user || {};
+
+  if (!token) throw new Error('Authentication failed: No token received');
+
+  switch (panelKey) {
+    case 'hotel': {
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminInfo', JSON.stringify(user));
+      if (adminStoreLogin) {
+        adminStoreLogin(email, password).catch(console.error);
+      }
+      return { redirectTo: '/admin/dashboard' };
+    }
+    case 'wedding': {
+      localStorage.setItem('admin_token', token);
+      localStorage.setItem('admin_user', JSON.stringify(user));
+      return { redirectTo: '/wedding/admin/dashboard' };
+    }
+    case 'taxi': {
+      // Use Om bhaiya's original robust Taxi Admin Login API
+      const response = await api.post('/taxi/admin/login', { email, password });
+      const payload = response?.data || response || {};
+      const authData = payload?.admin ? payload : (payload?.data || payload || {});
+      
+      const token = authData.token || '';
+      const user = authData.admin || {};
+      
+      if (!token) throw new Error('Taxi Admin authentication failed');
+
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminInfo', JSON.stringify(user));
+      localStorage.setItem('taxiAdminToken', token);
+      localStorage.setItem('taxiAdminInfo', JSON.stringify(user));
+      return { redirectTo: '/taxi/admin' };
+    }
+    case 'cms': {
+      localStorage.setItem('cmsToken', token);
+      localStorage.setItem('adminInfo', JSON.stringify(user));
+      return { redirectTo: '/cms-admin' };
+    }
+    default:
+      throw new Error('Please select a panel');
+  }
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const AdminLogin = () => {
-  const { settings } = useSettings();
   const [view, setView] = useState('login'); // 'login' | 'forgot-email' | 'verify-otp' | 'reset-password'
+  const [selectedPanel, setSelectedPanel] = useState('hotel');
+  const [panelDropdownOpen, setPanelDropdownOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const appLogo = settings.general?.logo || settings.customization?.logo;
-  const appName = settings.general?.app_name || 'App';
-  const brandAccent = settings.customization?.admin_theme_color || '#F97316';
+  const adminStoreLogin = useAdminStore(state => state.login);
 
-  const resetMessages = () => {
-    setError('');
-    setSuccess('');
-  };
+  const currentPanel = PANELS.find(p => p.key === selectedPanel) || PANELS[0];
+
+  const resetMessages = () => { setError(''); setSuccess(''); };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     resetMessages();
-
     try {
-      const response = await adminService.login({ email, password });
-      const payload = response?.data || response || {};
-      const authData = payload?.data || payload || {};
-      localStorage.setItem('adminToken', authData.token || '');
-      localStorage.setItem('adminInfo', JSON.stringify(authData.admin || {}));
-      setTimeout(() => navigate('/admin/dashboard'), 300);
+      const { redirectTo } = await loginByPanel(selectedPanel, email, password, adminStoreLogin);
+      setTimeout(() => navigate(redirectTo), 300);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Unable to complete admin login.');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -79,19 +182,14 @@ const AdminLogin = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
     setIsLoading(true);
     resetMessages();
     try {
       await adminService.resetPassword({ email, otp, password: newPassword });
       setSuccess('Password changed successfully. Please login.');
       setView('login');
-      setPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
@@ -99,280 +197,306 @@ const AdminLogin = () => {
     }
   };
 
-  const renderLoginForm = () => (
-    <form onSubmit={handleLogin} className="space-y-2.5 md:space-y-4">
-      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-left">
-        <p className="text-[11px] font-black uppercase tracking-[1.5px] text-emerald-700">Database-backed Access</p>
-        <p className="mt-1 text-[12px] sm:text-[13px] font-semibold leading-relaxed text-emerald-900">
-          Sign in with your superadmin or subadmin email and password. Admin accounts are loaded from the database.
-        </p>
-      </div>
+  const renderView = () => {
+    switch (view) {
+      case 'forgot-email':
+        return (
+          <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+            onSubmit={handleForgotPassword} className="space-y-5">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Reset Password</h2>
+            <p className="text-gray-500 text-sm text-center mb-6">Enter your registered email address.</p>
 
-      <div className="space-y-3">
-        <div className="relative group">
-          <div className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-all">
-            <Mail size={20} strokeWidth={2} />
-          </div>
-          <input
-            type="email"
-            placeholder="Official Email Address"
-            required
-            disabled={isLoading}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="username"
-            className="w-full pl-14 sm:pl-16 pr-5 sm:pr-6 py-3 md:py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-[15px] md:text-[16px] transition-all font-semibold placeholder:text-gray-300 outline-none"
-          />
-        </div>
-        <div className="relative group">
-          <div className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-all">
-            <Lock size={20} strokeWidth={2} />
-          </div>
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Security Access Token"
-            required
-            disabled={isLoading}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            className="w-full pl-14 sm:pl-16 pr-12 py-3 md:py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-[15px] md:text-[16px] transition-all font-semibold placeholder:text-gray-300 outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-all focus:outline-none"
-          >
-            {showPassword ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
-          </button>
-        </div>
-      </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider ml-1">Email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white/50 border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all backdrop-blur-sm"
+                  style={{ '--tw-ring-color': currentPanel.color }}
+                  placeholder="admin@mydestination.com" />
+              </div>
+            </div>
 
-      <div className="flex items-center justify-end px-2 mb-1 md:mb-2">
-        <button
-          type="button"
-          onClick={() => { setView('forgot-email'); resetMessages(); }}
-          className="text-[12px] sm:text-[13px] font-black text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-        >
-          Forgot Password?
-        </button>
-      </div>
+            <button type="submit" disabled={isLoading}
+              className={`w-full flex justify-center items-center py-3 px-4 rounded-xl text-white font-semibold shadow-lg shadow-${currentPanel.color}/30 transform transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed ${currentPanel.buttonColor}`}>
+              {isLoading ? 'Sending...' : 'Send OTP'}
+            </button>
+            <div className="text-center mt-4">
+              <button type="button" onClick={() => { setView('login'); resetMessages(); }}
+                className="text-sm font-medium hover:underline transition-colors"
+                style={{ color: currentPanel.color }}>
+                Back to Login
+              </button>
+            </div>
+          </motion.form>
+        );
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className={`w-full ${isLoading ? 'bg-primary/80' : 'bg-primary'} py-3 md:py-4 rounded-[24px] text-white font-black text-[16px] md:text-[18px] shadow-2xl shadow-primary/30 hover:translate-y-[-2px] hover:shadow-primary/40 active:translate-y-[1px] transition-all flex items-center justify-center gap-3 mt-1 md:mt-3`}
-      >
-        {isLoading ? (
-          <Loader2 className="animate-spin" size={22} />
-        ) : (
-          <>
-            Initialize Login <ArrowRight size={20} />
-          </>
-        )}
-      </button>
-    </form>
-  );
+      case 'verify-otp':
+        return (
+          <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+            onSubmit={handleVerifyOtp} className="space-y-5">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">Verify OTP</h2>
+            <p className="text-gray-500 text-sm text-center mb-6">Enter the OTP sent to {email}</p>
 
-  const renderForgotEmailForm = () => (
-    <form onSubmit={handleForgotPassword} className="space-y-4">
-      <div className="text-left mb-2">
-        <h3 className="text-lg font-bold text-gray-800">Forgot Password</h3>
-        <p className="text-sm text-gray-500">Enter your registered email to receive an OTP.</p>
-      </div>
-      <div className="relative group">
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary">
-          <Mail size={20} />
-        </div>
-        <input
-          type="email"
-          placeholder="Enter Registered Email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-[16px] transition-all font-semibold outline-none"
-        />
-      </div>
-      <div className="flex flex-col gap-3">
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-primary py-4 rounded-[24px] text-white font-black text-[16px] shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2"
-        >
-          {isLoading ? <Loader2 className="animate-spin" size={22} /> : <>Send OTP <ArrowRight size={20} /></>}
-        </button>
-        <button
-          type="button"
-          onClick={() => setView('login')}
-          className="flex items-center justify-center gap-2 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <ArrowLeft size={16} /> Back to Login
-        </button>
-      </div>
-    </form>
-  );
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider ml-1">OTP Code</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <KeyRound className="h-5 w-5 text-gray-400" />
+                </div>
+                <input type="text" required value={otp} onChange={(e) => setOtp(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white/50 border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all backdrop-blur-sm"
+                  style={{ '--tw-ring-color': currentPanel.color }}
+                  placeholder="Enter 6-digit OTP" />
+              </div>
+            </div>
 
-  const renderVerifyOtpForm = () => (
-    <form onSubmit={handleVerifyOtp} className="space-y-4">
-      <div className="text-left mb-2">
-        <h3 className="text-lg font-bold text-gray-800">Verify OTP</h3>
-        <p className="text-sm text-gray-500">We've sent a 6-digit code to {email}</p>
-      </div>
-      <div className="relative group">
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary">
-          <KeyRound size={20} />
-        </div>
-        <input
-          type="text"
-          placeholder="Enter OTP"
-          required
-          maxLength={6}
-          value={otp}
-          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-          className={`w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-center text-2xl ${otp ? 'tracking-[10px]' : 'tracking-normal'} transition-all font-bold outline-none`}
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-primary py-4 rounded-[24px] text-white font-black text-[16px] shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2"
-      >
-        {isLoading ? <Loader2 className="animate-spin" size={22} /> : <>Verify OTP <ArrowRight size={20} /></>}
-      </button>
-      <div className="flex justify-between items-center px-2">
-        <button type="button" onClick={() => setView('forgot-email')} className="text-xs font-bold text-gray-400 hover:text-primary transition-colors">Change Email</button>
-        <button type="button" onClick={handleForgotPassword} className="text-xs font-bold text-primary hover:underline">Resend OTP</button>
-      </div>
-    </form>
-  );
+            <button type="submit" disabled={isLoading}
+              className={`w-full flex justify-center items-center py-3 px-4 rounded-xl text-white font-semibold shadow-lg shadow-${currentPanel.color}/30 transform transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed ${currentPanel.buttonColor}`}>
+              {isLoading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+            <div className="text-center mt-4">
+              <button type="button" onClick={() => { setView('login'); resetMessages(); }}
+                className="text-sm font-medium hover:underline transition-colors"
+                style={{ color: currentPanel.color }}>
+                Cancel
+              </button>
+            </div>
+          </motion.form>
+        );
 
-  const renderResetPasswordForm = () => (
-    <form onSubmit={handleResetPassword} className="space-y-4">
-      <div className="text-left mb-2">
-        <h3 className="text-lg font-bold text-gray-800">New Password</h3>
-        <p className="text-sm text-gray-500">Set a strong security token for your account.</p>
-      </div>
-      <div className="space-y-3">
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary">
-            <Lock size={20} />
-          </div>
-          <input
-            type="password"
-            placeholder="New Password"
-            required
-            minLength={5}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-[16px] font-semibold outline-none"
-          />
-        </div>
-        <div className="relative group">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary">
-            <Lock size={20} />
-          </div>
-          <input
-            type="password"
-            placeholder="Confirm New Password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-primary/20 focus:bg-white rounded-3xl text-[16px] font-semibold outline-none"
-          />
-        </div>
-      </div>
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-primary py-4 rounded-[24px] text-white font-black text-[16px] shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2"
-      >
-        {isLoading ? <Loader2 className="animate-spin" size={22} /> : <>Reset Password <CheckCircle2 size={20} /></>}
-      </button>
-    </form>
-  );
+      case 'reset-password':
+        return (
+          <motion.form initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+            onSubmit={handleResetPassword} className="space-y-5">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">New Password</h2>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider ml-1">New Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input type={showPassword ? 'text' : 'password'} required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full pl-11 pr-10 py-3 bg-white/50 border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all backdrop-blur-sm"
+                    style={{ '--tw-ring-color': currentPanel.color }}
+                    placeholder="••••••••" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider ml-1">Confirm Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input type={showPassword ? 'text' : 'password'} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-11 pr-10 py-3 bg-white/50 border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-all backdrop-blur-sm"
+                    style={{ '--tw-ring-color': currentPanel.color }}
+                    placeholder="••••••••" />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" disabled={isLoading}
+              className={`w-full flex justify-center items-center py-3 px-4 rounded-xl text-white font-semibold shadow-lg shadow-${currentPanel.color}/30 transform transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed ${currentPanel.buttonColor}`}>
+              {isLoading ? 'Updating...' : 'Set Password'}
+            </button>
+          </motion.form>
+        );
+
+      case 'login':
+      default:
+        return (
+          <motion.form initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+            onSubmit={handleLogin} className="space-y-4">
+
+            {/* Custom Dropdown for Panel Selection */}
+            <div className="space-y-1 relative">
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest ml-1">Select Management Panel</label>
+
+              <div
+                className={`relative w-full cursor-pointer flex items-center p-2.5 rounded-xl border ${panelDropdownOpen ? currentPanel.border : 'border-gray-200/60'} bg-white/60 backdrop-blur-md transition-all group`}
+                onClick={() => setPanelDropdownOpen(!panelDropdownOpen)}
+                style={{
+                  borderColor: panelDropdownOpen ? currentPanel.color : undefined,
+                  boxShadow: panelDropdownOpen ? `0 0 0 3px ${currentPanel.color}20` : undefined
+                }}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center mr-3 shadow-sm ${currentPanel.bg}`}>
+                  <currentPanel.icon size={18} style={{ color: currentPanel.color }} />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className={`text-[13px] font-bold ${currentPanel.textColor}`}>{currentPanel.label}</div>
+                  <div className="text-[10px] text-gray-500 font-medium">{currentPanel.sublabel}</div>
+                </div>
+                <div className={`ml-2 transition-transform duration-300 ${panelDropdownOpen ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={18} className="text-gray-400" />
+                </div>
+              </div>
+
+              {/* Dropdown Options */}
+              <AnimatePresence>
+                {panelDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -10, height: 0 }}
+                    className="absolute z-20 w-full mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-xl shadow-2xl overflow-hidden"
+                  >
+                    {PANELS.map((panel) => (
+                      <div
+                        key={panel.key}
+                        className={`flex items-center p-3 cursor-pointer transition-colors ${selectedPanel === panel.key ? panel.bg : 'hover:bg-gray-50/80'}`}
+                        onClick={() => {
+                          setSelectedPanel(panel.key);
+                          setPanelDropdownOpen(false);
+                          setError('');
+                        }}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 shadow-sm ${selectedPanel === panel.key ? 'bg-white' : panel.bg}`}>
+                          <panel.icon size={16} style={{ color: panel.color }} />
+                        </div>
+                        <div className="flex-1">
+                          <div className={`text-[13px] font-bold ${selectedPanel === panel.key ? panel.textColor : 'text-gray-700'}`}>
+                            {panel.label}
+                          </div>
+                          <div className="text-[10px] text-gray-400 font-medium">{panel.sublabel}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Inputs */}
+            <div className="space-y-3 pt-1">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Official Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/60 border border-gray-200/60 rounded-xl text-gray-800 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all backdrop-blur-sm shadow-inner"
+                    style={{ '--tw-ring-color': currentPanel.color }}
+                    placeholder="admin@mydestination.com" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-9 pr-10 py-2.5 text-sm bg-white/60 border border-gray-200/60 rounded-xl text-gray-800 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all backdrop-blur-sm shadow-inner"
+                    style={{ '--tw-ring-color': currentPanel.color }}
+                    placeholder="••••••••" />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-0.5">
+              <button type="button" onClick={() => { setView('forgot-email'); resetMessages(); }}
+                className="text-[10px] font-bold uppercase tracking-wider hover:opacity-80 transition-opacity"
+                style={{ color: currentPanel.color }}>
+                Forgot Password?
+              </button>
+            </div>
+
+            <button type="submit" disabled={isLoading}
+              className={`w-full flex justify-center items-center py-3 px-4 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none ${currentPanel.buttonColor}`}
+              style={{ boxShadow: `0 8px 20px -5px ${currentPanel.color}60` }}>
+              {isLoading ? 'Authenticating...' : `Login to ${currentPanel.label}`}
+              {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
+            </button>
+          </motion.form>
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-3 py-2 sm:py-3 md:py-4 font-sans overflow-hidden relative">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] animate-pulse" style={{ backgroundColor: `${brandAccent}1A` }} />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse delay-700" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-gray-900 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: `url(${adminBg})` }}
+    >
+      {/* Dark overlay for better contrast */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"></div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-[390px] md:max-w-[420px] bg-white rounded-[32px] md:rounded-[48px] shadow-[0_40px_100px_rgba(0,0,0,0.08)] border border-gray-100 px-4 py-3 sm:px-5 sm:py-4 md:px-14 md:py-8 relative z-10 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="w-full max-w-[380px] z-10"
       >
-        {isLoading && (
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            className="absolute top-0 left-0 h-1.5 bg-primary z-20"
-          />
-        )}
+        <div className="bg-white/90 backdrop-blur-xl border border-white/40 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] rounded-3xl p-6 sm:p-8 relative overflow-hidden">
 
-        <div className="flex flex-col items-center mb-3 md:mb-6 text-center">
-          {appLogo ? (
-            <img
-              src={appLogo}
-              alt={`${appName} Logo`}
-              className="w-36 sm:w-44 md:w-56 h-auto mb-2 md:mb-4 object-contain drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => navigate('/')}
-            />
-          ) : (
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl">
-               <ShieldCheck size={32} />
+          {/* Decorative glowing orb behind the form */}
+          <div
+            className="absolute -top-32 -right-32 w-64 h-64 rounded-full blur-[80px] opacity-20 pointer-events-none transition-colors duration-700"
+            style={{ backgroundColor: currentPanel.color }}
+          ></div>
+          <div
+            className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full blur-[80px] opacity-20 pointer-events-none transition-colors duration-700"
+            style={{ backgroundColor: currentPanel.color }}
+          ></div>
+
+          {/* Header */}
+          <div className="flex flex-col items-center mb-6 text-center relative z-10">
+            <motion.div
+              key={currentPanel.key}
+              initial={{ scale: 0.8, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring" }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl cursor-pointer hover:scale-105 transition-transform"
+              style={{
+                background: `linear-gradient(135deg, ${currentPanel.color}, ${currentPanel.color}dd)`,
+                boxShadow: `0 10px 25px -5px ${currentPanel.color}60`
+              }}
+              onClick={() => navigate('/')}>
+              <currentPanel.icon size={26} strokeWidth={2.5} />
+            </motion.div>
+
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-white/60 backdrop-blur-sm border border-gray-100 rounded-full shadow-sm mb-2">
+              <span className="text-gray-800 font-extrabold text-[10px] uppercase tracking-[3px]">Admin Access Portal</span>
             </div>
-          )}
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">
-            <ShieldCheck size={16} className="text-primary" />
-            <span className="text-gray-500 font-bold text-[11px] uppercase tracking-[2px]">{appName} Access Terminal</span>
+            <p className="text-gray-500 text-xs font-medium mt-2">Sign in to manage operations</p>
           </div>
-          <p className="mt-3 max-w-xs text-center text-[12px] font-semibold leading-relaxed text-slate-400">
-            Dynamic admin login for superadmin and scoped subadmin accounts.
-          </p>
+
+          {/* Error/Success Messages */}
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ opacity: 0, height: 0, mb: 0 }} animate={{ opacity: 1, height: 'auto', mb: 16 }} exit={{ opacity: 0, height: 0, mb: 0 }}
+                className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center shadow-sm">
+                <span className="mr-2">⚠️</span> {error}
+              </motion.div>
+            )}
+            {success && (
+              <motion.div initial={{ opacity: 0, height: 0, mb: 0 }} animate={{ opacity: 1, height: 'auto', mb: 16 }} exit={{ opacity: 0, height: 0, mb: 0 }}
+                className="bg-green-50/80 backdrop-blur-sm border border-green-200 text-green-600 px-4 py-3 rounded-xl text-sm flex items-center shadow-sm">
+                <span className="mr-2">✅</span> {success}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="relative z-10">
+            {renderView()}
+          </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-3 p-3 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-600"
-            >
-              <AlertCircle size={20} className="shrink-0 mt-0.5" />
-              <p className="text-[13px] font-bold leading-relaxed">{error}</p>
-            </motion.div>
-          )}
-          {success && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-3 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 text-emerald-600"
-            >
-              <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
-              <p className="text-[13px] font-bold leading-relaxed">{success}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={view}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {view === 'login' && renderLoginForm()}
-            {view === 'forgot-email' && renderForgotEmailForm()}
-            {view === 'verify-otp' && renderVerifyOtpForm()}
-            {view === 'reset-password' && renderResetPasswordForm()}
-          </motion.div>
-        </AnimatePresence>
+        <p className="text-center text-white/70 text-xs mt-6 font-medium tracking-wide drop-shadow-md">
+          &copy; {new Date().getFullYear()} MyDestination. All rights reserved.
+        </p>
       </motion.div>
     </div>
   );
